@@ -1,0 +1,135 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getLocalizedPath, isLang, type Lang } from '../../i18n/utils';
+import { locales } from '../../i18n/ui';
+
+export function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params;
+
+if (!isLang(lang)) {
+  return Astro.redirect(getLocalizedPath('es', 'privacidad'));
+}
+
+const currentLang = lang as Lang;
+
+const content = {
+  es: {
+    title: 'Privacidad en PDFWorld',
+    description: 'Cómo trata PDFWorld tus archivos PDF: procesamiento local en el navegador, sin subidas a servidores y con almacenamiento temporal limitado.',
+    badge: 'Privacidad clara',
+    h1: 'Tus PDF se quedan en tu navegador',
+    lead: 'PDFWorld está pensado para trabajar con documentos directamente en tu dispositivo. En las herramientas disponibles, los archivos se procesan de forma local en el navegador y no se suben a nuestros servidores.',
+    footer: 'Tus archivos se procesan localmente. Consulta la página de privacidad para entender los detalles.',
+  },
+  en: {
+    title: 'Privacy at PDFWorld',
+    description: 'How PDFWorld handles your PDF files: local browser processing, no server uploads and limited temporary storage.',
+    badge: 'Clear privacy',
+    h1: 'Your PDFs stay in your browser',
+    lead: 'PDFWorld is designed to work with documents directly on your device. In the available tools, files are processed locally in the browser and are not uploaded to our servers.',
+    footer: 'Your files are processed locally. See the privacy page for details.',
+  },
+}[currentLang];
+---
+
+<BaseLayout lang={currentLang} title={content.title} description={content.description} path="privacidad">
+  <section class="privacy-hero" aria-labelledby="privacy-title">
+    <span class="badge">{content.badge}</span>
+    <h1 id="privacy-title">{content.h1}</h1>
+    <p class="lead">{content.lead}</p>
+  </section>
+
+  {currentLang === 'es' ? (
+    <article class="privacy-page" aria-label="Información de privacidad">
+      <section class="privacy-card privacy-card--highlight">
+        <h2>Resumen rápido</h2>
+        <p><strong>No necesitamos recibir tus PDF para que funcionen las herramientas principales.</strong> Cuando unes, divides, ordenas, rotas, comprimes o escaneas documentos, el trabajo se hace en tu propio navegador.</p>
+        <ul>
+          <li>Los PDF no se suben a un servidor de PDFWorld.</li>
+          <li>El procesamiento ocurre en memoria, pestaña o almacenamiento local del navegador, según la herramienta.</li>
+          <li>Al cerrar o recargar la página, el estado de trabajo se pierde en la mayoría de herramientas.</li>
+          <li>Si una herramienta usa almacenamiento local temporal para pasar un PDF a otra herramienta, ese archivo se guarda en tu navegador durante un tiempo limitado.</li>
+        </ul>
+      </section>
+
+      <section class="privacy-grid" aria-label="Puntos clave de privacidad">
+        <div class="privacy-card">
+          <span aria-hidden="true">🧭</span>
+          <h2>Qué significa “procesamiento local”</h2>
+          <p>Significa que el archivo se abre y se transforma con JavaScript dentro del navegador. Tu ordenador o móvil hace el trabajo: leer páginas, generar miniaturas, crear un nuevo PDF o preparar la descarga.</p>
+        </div>
+        <div class="privacy-card">
+          <span aria-hidden="true">🚫</span>
+          <h2>No subimos tus documentos</h2>
+          <p>Las herramientas están diseñadas para funcionar sin enviar el contenido de tus archivos a servidores externos. PDFWorld no recibe una copia de tus documentos para procesarlos.</p>
+        </div>
+        <div class="privacy-card">
+          <span aria-hidden="true">🧹</span>
+          <h2>Qué pasa al cerrar o recargar</h2>
+          <p>Al cerrar o recargar la pestaña se pierde el trabajo cargado en memoria. Si no has descargado el resultado, tendrás que volver a seleccionar el archivo y repetir la operación.</p>
+        </div>
+      </section>
+
+      <section class="privacy-card">
+        <h2>Almacenamiento temporal en el navegador</h2>
+        <p>Algunas funciones pueden usar almacenamiento local del propio navegador para mejorar la experiencia. Por ejemplo, al generar un PDF escaneado puedes pasarlo automáticamente a otra herramienta sin descargarlo y volverlo a subir manualmente.</p>
+        <p>En ese caso, el archivo se guarda temporalmente en tu navegador, no en nuestros servidores. Ese traspaso está pensado para durar poco tiempo y se elimina cuando la herramienta destino lo consume o cuando caduca.</p>
+      </section>
+
+      <section class="privacy-card">
+        <h2>Descargas y vistas previas</h2>
+        <p>Cuando generas una vista previa, el navegador crea una URL temporal interna para mostrar el resultado. Esa URL sirve solo dentro de tu sesión de navegación y se libera cuando cierras la vista previa, limpias la herramienta, recargas o sales de la página.</p>
+      </section>
+
+      <section class="privacy-card">
+        <h2>Cámara y escaneo de documentos</h2>
+        <p>La herramienta de escaneo puede pedir permiso para usar la cámara. La imagen capturada se utiliza para crear el PDF en el navegador. PDFWorld no recibe la imagen de la cámara ni el PDF generado.</p>
+        <p>El permiso de cámara lo gestiona tu navegador. Puedes retirarlo desde los ajustes del navegador o del dispositivo.</p>
+      </section>
+
+      <section class="privacy-card">
+        <h2>Analítica y cookies</h2>
+        <p>Esta página queda preparada para explicar cualquier analítica o cookie que se añada en el futuro. Si PDFWorld incorpora medición de uso, avisos de consentimiento o cookies no esenciales, esta sección deberá actualizarse con información clara sobre qué se mide, con qué finalidad y cómo se puede configurar.</p>
+        <p>La promesa importante es esta: la analítica, si existe, no debería utilizarse para leer ni subir el contenido de tus PDF.</p>
+      </section>
+
+      <section class="privacy-card">
+        <h2>Límites honestos</h2>
+        <p>Aunque PDFWorld no suba tus archivos para procesarlos, sigues usando un navegador, un sistema operativo y un dispositivo. Si tienes extensiones instaladas, software corporativo, sincronización de sistema o copias de seguridad, esos elementos pueden tener sus propias reglas.</p>
+        <p>Para documentos muy sensibles, usa siempre un dispositivo de confianza, evita extensiones innecesarias y descarga el resultado solo cuando estés conforme.</p>
+      </section>
+    </article>
+  ) : (
+    <article class="privacy-page" aria-label="Privacy information">
+      <section class="privacy-card privacy-card--highlight">
+        <h2>Quick summary</h2>
+        <p><strong>PDFWorld does not need to receive your PDFs for the main tools to work.</strong> Merging, splitting, reordering, rotating, compressing and scanning run locally in your browser.</p>
+        <ul>
+          <li>PDF files are not uploaded to a PDFWorld server.</li>
+          <li>Processing happens in browser memory, the current tab or local browser storage depending on the tool.</li>
+          <li>Closing or reloading the page usually clears the current workspace.</li>
+          <li>Temporary local storage may be used to pass a generated PDF to another tool.</li>
+        </ul>
+      </section>
+
+      <section class="privacy-card">
+        <h2>Local processing</h2>
+        <p>The file is opened and transformed with JavaScript inside your browser. Your own device reads pages, creates previews and generates the new PDF.</p>
+      </section>
+
+      <section class="privacy-card">
+        <h2>Analytics and cookies</h2>
+        <p>This section is ready for any future analytics or cookie information. If non-essential cookies or usage measurement are added, this page should clearly explain what is measured, why and how it can be configured.</p>
+      </section>
+    </article>
+  )}
+
+  <Fragment slot="footer">{content.footer}</Fragment>
+</BaseLayout>
+
+<style>
+  .privacy-hero{display:grid;justify-items:center;gap:var(--pw-space-4);padding:clamp(3rem,6vw,5.2rem) 0 clamp(1.5rem,3vw,2.4rem);text-align:center}.privacy-page{display:grid;gap:var(--pw-space-5);width:min(980px,100%);margin:0 auto var(--pw-space-12)}.privacy-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--pw-grid-gap)}.privacy-card{padding:clamp(1.2rem,2.4vw,1.8rem);border:1px solid var(--pw-color-line);border-radius:var(--pw-radius-xl);background:rgba(255,255,255,.9);box-shadow:var(--pw-shadow-sm)}.privacy-card--highlight{border-color:rgba(240,82,61,.28);background:linear-gradient(135deg,#fff,var(--pw-color-brand-50))}.privacy-card>span{display:inline-grid;width:3rem;height:3rem;place-items:center;margin-bottom:var(--pw-space-3);border-radius:var(--pw-radius-md);background:var(--pw-color-brand-50);font-size:1.35rem}.privacy-card h2{margin-top:0}.privacy-card p:last-child,.privacy-card ul:last-child{margin-bottom:0}.privacy-card strong{color:var(--pw-color-ink-strong)}@media (max-width:860px){.privacy-hero{text-align:left;justify-items:start}.privacy-grid{grid-template-columns:1fr}}
+</style>
