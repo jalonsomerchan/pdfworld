@@ -1,0 +1,68 @@
+export const languages = {
+  es: 'Español',
+  en: 'English',
+} as const;
+
+export const defaultLang = 'es';
+export const locales = Object.keys(languages) as Lang[];
+
+export type Lang = keyof typeof languages;
+
+export const ui = {
+  es: {
+    'site.name': 'PDFWorld',
+    'site.tagline': 'Herramientas PDF privadas y gratuitas',
+    'nav.home': 'Inicio',
+    'nav.mergePdf': 'Unir PDF',
+    'seo.home.title': 'PDFWorld: herramientas PDF privadas y gratuitas',
+    'seo.home.description': 'Herramientas PDF online que funcionan directamente en tu navegador. Une, divide, convierte y edita PDFs sin subir archivos a ningún servidor.',
+    'home.h1': 'Herramientas PDF privadas',
+    'home.lead': 'Trabaja con tus PDF directamente en el navegador. Tus archivos no se suben a ningún servidor y desaparecen al cerrar la pestaña.',
+    'home.privacyBadge': '100% privado · Sin subidas · En tu navegador',
+    'home.toolsTitle': 'Herramientas disponibles',
+    'home.mergePdf.title': 'Unir PDF',
+    'home.mergePdf.description': 'Combina varios archivos PDF en uno solo sin perder privacidad.',
+    'home.comingSoon': 'Más herramientas pronto: dividir, rotar, eliminar páginas, JPG a PDF y PDF a JPG.',
+    'home.seoTitle': 'PDF online sin subir archivos',
+    'home.seoText': 'PDFWorld está pensado para procesar documentos localmente siempre que sea posible. Esto mejora la privacidad porque los archivos permanecen en tu dispositivo.',
+    'tool.merge.seo.title': 'Unir PDF online gratis y privado',
+    'tool.merge.seo.description': 'Une varios archivos PDF directamente en tu navegador. Gratis, privado y sin subir documentos a ningún servidor.',
+    'tool.merge.h1': 'Unir PDF online',
+    'tool.merge.lead': 'Selecciona varios PDF, ordénalos y descarga un único archivo final. Todo el proceso ocurre en tu navegador.',
+    'tool.merge.howTitle': 'Cómo unir PDF',
+    'tool.merge.step1': 'Selecciona dos o más archivos PDF.',
+    'tool.merge.step2': 'Revisa el orden de los documentos.',
+    'tool.merge.step3': 'Genera y descarga el PDF unido.',
+    'tool.merge.privacyTitle': '¿Se suben mis archivos?',
+    'tool.merge.privacyText': 'No. La herramienta está diseñada para funcionar en el navegador. Los archivos no salen de tu dispositivo.',
+    'footer.privacy': 'Tus archivos se procesan localmente en tu navegador.',
+  },
+  en: {
+    'site.name': 'PDFWorld',
+    'site.tagline': 'Private and free PDF tools',
+    'nav.home': 'Home',
+    'nav.mergePdf': 'Merge PDF',
+    'seo.home.title': 'PDFWorld: private and free PDF tools',
+    'seo.home.description': 'Online PDF tools that run directly in your browser. Merge, split, convert and edit PDFs without uploading files to any server.',
+    'home.h1': 'Private PDF tools',
+    'home.lead': 'Work with your PDFs directly in the browser. Your files are not uploaded to any server and disappear when you close the tab.',
+    'home.privacyBadge': '100% private · No uploads · In your browser',
+    'home.toolsTitle': 'Available tools',
+    'home.mergePdf.title': 'Merge PDF',
+    'home.mergePdf.description': 'Combine several PDF files into one without losing privacy.',
+    'home.comingSoon': 'More tools soon: split, rotate, remove pages, JPG to PDF and PDF to JPG.',
+    'home.seoTitle': 'Online PDF tools without file uploads',
+    'home.seoText': 'PDFWorld is designed to process documents locally whenever possible. This improves privacy because files stay on your device.',
+    'tool.merge.seo.title': 'Merge PDF online for free and privately',
+    'tool.merge.seo.description': 'Merge several PDF files directly in your browser. Free, private and without uploading documents to any server.',
+    'tool.merge.h1': 'Merge PDF online',
+    'tool.merge.lead': 'Select multiple PDFs, arrange them and download a single final file. Everything happens in your browser.',
+    'tool.merge.howTitle': 'How to merge PDF files',
+    'tool.merge.step1': 'Select two or more PDF files.',
+    'tool.merge.step2': 'Review the document order.',
+    'tool.merge.step3': 'Generate and download the merged PDF.',
+    'tool.merge.privacyTitle': 'Are my files uploaded?',
+    'tool.merge.privacyText': 'No. The tool is designed to run in the browser. Your files never leave your device.',
+    'footer.privacy': 'Your files are processed locally in your browser.',
+  },
+} as const;
