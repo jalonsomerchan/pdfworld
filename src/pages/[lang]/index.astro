@@ -1,0 +1,47 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getLocalizedPath, isLang, useTranslations, type Lang } from '../../i18n/utils';
+import { locales } from '../../i18n/ui';
+
+export function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params;
+
+if (!isLang(lang)) {
+  return Astro.redirect(getLocalizedPath('es'));
+}
+
+const t = useTranslations(lang as Lang);
+---
+
+<BaseLayout
+  lang={lang}
+  title={t('seo.home.title')}
+  description={t('seo.home.description')}
+>
+  <section class="hero">
+    <span class="badge">{t('home.privacyBadge')}</span>
+    <h1>{t('home.h1')}</h1>
+    <p class="lead">{t('home.lead')}</p>
+  </section>
+
+  <section aria-labelledby="tools-title">
+    <h2 id="tools-title">{t('home.toolsTitle')}</h2>
+    <div class="grid">
+      <a class="card" href={getLocalizedPath(lang, 'unir-pdf')}>
+        <h3>{t('home.mergePdf.title')}</h3>
+        <p>{t('home.mergePdf.description')}</p>
+      </a>
+    </div>
+    <p>{t('home.comingSoon')}</p>
+  </section>
+
+  <section>
+    <h2>{t('home.seoTitle')}</h2>
+    <p>{t('home.seoText')}</p>
+  </section>
+
+  <Fragment slot="footer">{t('footer.privacy')}</Fragment>
+</BaseLayout>
