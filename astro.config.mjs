@@ -6,4 +6,11 @@ export default defineConfig({
   site: 'https://jalonsomerchan.github.io',
   base: '/pdfworld',
   integrations: [svelte()],
+  i18n: {
+    defaultLocale: 'es',
+    locales: ['es', 'en'],
+    routing: {
+      prefixDefaultLocale: true,
+    },
+  },
 });
