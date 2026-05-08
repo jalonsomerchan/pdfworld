@@ -1,11 +1,16 @@
 import { defaultLang, locales, ui, type Lang } from './ui';
 
+export type { Lang };
+
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+
 export function isLang(lang: string | undefined): lang is Lang {
   return Boolean(lang && locales.includes(lang as Lang));
 }
 
 export function getLangFromUrl(url: URL): Lang {
-  const [, lang] = url.pathname.split('/').filter(Boolean);
+  const segments = url.pathname.split('/').filter(Boolean);
+  const lang = segments.find((segment) => isLang(segment));
   return isLang(lang) ? lang : defaultLang;
 }
 
@@ -16,8 +21,9 @@ export function useTranslations(lang: Lang) {
 }
 
 export function getLocalizedPath(lang: Lang, path = '') {
-  const cleanPath = path.replace(/^\//, '');
-  return `/${lang}/${cleanPath}`.replace(/\/$/, '') || `/${lang}`;
+  const cleanPath = path.replace(/^\//, '').replace(/\/$/, '');
+  const localizedPath = cleanPath ? `/${lang}/${cleanPath}` : `/${lang}`;
+  return `${basePath}${localizedPath}`;
 }
 
 export function getAlternateLinks(path = '') {
