@@ -247,14 +247,14 @@ export const pdfTools = [
       en: 'Split PDF',
     },
     description: {
-      es: 'Separa páginas o rangos de un PDF para crear nuevos documentos.',
-      en: 'Separate pages or ranges from a PDF to create new documents.',
+      es: 'Extrae páginas o rangos de un PDF y descarga un nuevo documento privado.',
+      en: 'Extract pages or ranges from a PDF and download a new private document.',
     },
     category: 'organizar',
     route: 'dividir-pdf',
     icon: '✂️',
-    status: 'soon',
-    keywords: ['dividir pdf', 'separar pdf', 'split pdf'],
+    status: 'available',
+    keywords: ['dividir pdf', 'separar pdf', 'extraer páginas pdf', 'split pdf', 'pdf-lib'],
     seo: {
       title: {
         es: 'Dividir PDF online sin subir archivos',
