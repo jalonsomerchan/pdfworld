@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getLocalizedPath, isLang, useTranslations, type Lang } from '../../i18n/utils';
 import { locales } from '../../i18n/ui';
+import { getCategoriesWithTools, toolStatusLabels } from '../../data/tools';
 
 export function getStaticPaths() {
   return locales.map((lang) => ({ params: { lang } }));
@@ -14,6 +15,7 @@ if (!isLang(lang)) {
 }
 
 const t = useTranslations(lang as Lang);
+const categoriesWithTools = getCategoriesWithTools();
 ---
 
 <BaseLayout
@@ -29,13 +31,46 @@ const t = useTranslations(lang as Lang);
 
   <section aria-labelledby="tools-title">
     <h2 id="tools-title">{t('home.toolsTitle')}</h2>
-    <div class="grid">
-      <a class="card" href={getLocalizedPath(lang, 'unir-pdf')}>
-        <h3>{t('home.mergePdf.title')}</h3>
-        <p>{t('home.mergePdf.description')}</p>
-      </a>
+    <p>{t('home.toolsIntro')}</p>
+
+    <div class="category-grid">
+      {categoriesWithTools.map((category) => (
+        <section class="category-card" aria-labelledby={`category-${category.id}`}>
+          <div class="category-card__header">
+            <span class="category-card__icon" aria-hidden="true">{category.icon}</span>
+            <div>
+              <h3 id={`category-${category.id}`}>{category.title[lang]}</h3>
+              <p>{category.description[lang]}</p>
+            </div>
+          </div>
+
+          <a class="category-link" href={getLocalizedPath(lang, `categoria/${category.id}`)}>
+            {t('home.categoryLink')}
+          </a>
+
+          <div class="tool-list">
+            {category.tools.map((tool) => {
+              const isAvailable = tool.status === 'available';
+              const href = isAvailable ? getLocalizedPath(lang, tool.route) : undefined;
+              const Tag = isAvailable ? 'a' : 'article';
+
+              return (
+                <Tag class:list={['tool-card', { 'tool-card--disabled': !isAvailable }]} href={href} aria-disabled={!isAvailable ? 'true' : undefined}>
+                  <div class="tool-card__title">
+                    <span aria-hidden="true">{tool.icon}</span>
+                    <strong>{tool.title[lang]}</strong>
+                  </div>
+                  <p>{tool.description[lang]}</p>
+                  <span class:list={['status-pill', `status-pill--${tool.status}`]}>
+                    {toolStatusLabels[tool.status][lang]}
+                  </span>
+                </Tag>
+              );
+            })}
+          </div>
+        </section>
+      ))}
     </div>
-    <p>{t('home.comingSoon')}</p>
   </section>
 
   <section>
