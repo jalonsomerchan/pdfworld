@@ -16,20 +16,22 @@
   let isDragging = false;
   let dragDepth = 0;
 
-  onMount(async () => {
+  onMount(() => {
     if (!acceptTransfers) return;
 
-    try {
-      const transfer = await consumePendingPdfTransfer();
-      if (transfer?.file) {
-        selectedLabel = document.documentElement.lang === 'en'
-          ? `Imported from ${transfer.source}: ${transfer.file.name}`
-          : `Importado desde ${transfer.source}: ${transfer.file.name}`;
-        await onFiles([transfer.file]);
+    void (async () => {
+      try {
+        const transfer = await consumePendingPdfTransfer();
+        if (transfer?.file) {
+          selectedLabel = document.documentElement.lang === 'en'
+            ? `Imported from ${transfer.source}: ${transfer.file.name}`
+            : `Importado desde ${transfer.source}: ${transfer.file.name}`;
+          await onFiles([transfer.file]);
+        }
+      } catch {
+        // Ignore transfer errors so the normal uploader keeps working.
       }
-    } catch {
-      // Ignore transfer errors so the normal uploader keeps working.
-    }
+    })();
   });
 
   function openFileDialog() {
