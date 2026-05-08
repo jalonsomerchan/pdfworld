@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onDestroy, tick } from 'svelte';
   import PdfDropzone from './PdfDropzone.svelte';
+  import PdfPageCard from './PdfPageCard.svelte';
   import PdfResultModal from './PdfResultModal.svelte';
   import { createPdfObjectUrl, formatFileSize, yieldToBrowser } from '../lib/pdfToolUtils';
   import {
@@ -447,29 +448,24 @@
           <h3 id="compress-pages-title">{t.pageEditor}</h3>
           <div class="compress-tool__page-grid">
             {#each Array.from({ length: pageCount }, (_, index) => index + 1) as page}
-              <article class:compress-tool__page={true} class:compress-tool__page--disabled={!pagesToKeep.includes(page)}>
-                <button
-                  type="button"
-                  class="compress-tool__page-toggle"
-                  aria-pressed={pagesToKeep.includes(page)}
-                  on:click={() => togglePage(page)}
-                >
-                  {#if thumbStatus[page] === 'ready' && thumbUrls[page]}
-                    <img src={thumbUrls[page]} alt={`${t.page} ${page}`} style={thumbStyle(page)} loading="lazy" />
-                  {:else}
-                    <span>{thumbStatus[page] === 'pending' ? '…' : page}</span>
-                  {/if}
-                </button>
-                <div class="compress-tool__page-meta">
-                  <strong>{t.page} {page}</strong>
-                  <span>{normalizeRotation(rotations[page] ?? 0)}°</span>
-                </div>
-                <div class="compress-tool__page-actions">
-                  <button type="button" on:click={() => rotatePage(page, -90)} aria-label={`${t.rotateLeft} ${page}`}>↶</button>
-                  <button type="button" on:click={() => rotatePage(page, 90)} aria-label={`${t.rotateRight} ${page}`}>↷</button>
-                  <button type="button" on:click={() => togglePage(page)}>{pagesToKeep.includes(page) ? t.removePage : t.restorePage}</button>
-                </div>
-              </article>
+              <PdfPageCard
+                pageNumber={page}
+                title={`${t.page} ${page}`}
+                thumbnailUrl={thumbUrls[page] ?? ''}
+                thumbnailStatus={thumbStatus[page] ?? 'pending'}
+                selected={pagesToKeep.includes(page)}
+                removed={!pagesToKeep.includes(page)}
+                rotation={rotations[page] ?? 0}
+                selectLabel={t.page}
+                rotateLeftLabel={t.rotateLeft}
+                rotateRightLabel={t.rotateRight}
+                removeLabel={t.removePage}
+                restoreLabel={t.restorePage}
+                onToggle={() => togglePage(page)}
+                onRotateLeft={() => rotatePage(page, -90)}
+                onRotateRight={() => rotatePage(page, 90)}
+                onRemove={() => togglePage(page)}
+              />
             {/each}
           </div>
         </section>

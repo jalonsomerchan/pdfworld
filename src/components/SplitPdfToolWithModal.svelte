@@ -4,6 +4,7 @@
   import { saveAs } from 'file-saver';
   import JSZip from 'jszip';
   import PdfDropzone from './PdfDropzone.svelte';
+  import PdfPageCard from './PdfPageCard.svelte';
   import PdfResultModal from './PdfResultModal.svelte';
   import { createPdfObjectUrl, yieldToBrowser } from '../lib/pdfToolUtils';
 
@@ -304,17 +305,24 @@
         <div class="split-modal-tool__quick"><strong>{selectedPages.length} {t.selected}</strong><div><button type="button" on:click={selectAll}>{t.selectAll}</button><button type="button" on:click={clearSelection}>{t.selectNone}</button><button type="button" on:click={invertSelection}>{t.invert}</button></div></div>
         <div class="split-modal-tool__grid">
           {#each pageNumbers as page}
-            <article class:split-modal-tool__page={true} class:split-modal-tool__page--selected={selectedPages.includes(page)}>
-              <button type="button" class="split-modal-tool__thumb-button" aria-pressed={selectedPages.includes(page)} on:click={() => togglePage(page)}>
-                <span class="split-modal-tool__thumb">{#if thumbStatus[page] === 'ready' && thumbUrls[page]}<img src={thumbUrls[page]} alt={`${t.page} ${page}`} style={thumbStyle(page)} loading="lazy" />{:else}<span class:split-modal-tool__placeholder={true} class:split-modal-tool__placeholder--loading={thumbStatus[page] === 'pending'}>{page}</span>{/if}</span>
-                <span><small>{t.page}</small><strong>{page}</strong></span>
-              </button>
-              <div class="split-modal-tool__page-actions">
-                <button type="button" on:click={() => rotatePage(page, -90)} aria-label={`${t.rotateLeft} ${page}`}>↶</button>
-                <button type="button" on:click={() => rotatePage(page, 90)} aria-label={`${t.rotateRight} ${page}`}>↷</button>
-                <button type="button" on:click={() => togglePage(page)}>{selectedPages.includes(page) ? '×' : '+'}</button>
-              </div>
-            </article>
+            <PdfPageCard
+              pageNumber={page}
+              title={`${t.page} ${page}`}
+              thumbnailUrl={thumbUrls[page] ?? ''}
+              thumbnailStatus={thumbStatus[page] ?? 'pending'}
+              selected={selectedPages.includes(page)}
+              removed={!selectedPages.includes(page)}
+              rotation={rotations[page] ?? 0}
+              selectLabel={t.page}
+              rotateLeftLabel={t.rotateLeft}
+              rotateRightLabel={t.rotateRight}
+              removeLabel="×"
+              restoreLabel="+"
+              onToggle={() => togglePage(page)}
+              onRotateLeft={() => rotatePage(page, -90)}
+              onRotateRight={() => rotatePage(page, 90)}
+              onRemove={() => togglePage(page)}
+            />
           {/each}
         </div>
       </section>
@@ -335,9 +343,4 @@
 
 <style>
   .split-modal-tool{display:grid;gap:22px;margin:32px 0 64px}.split-modal-tool__hero,.split-modal-tool__workspace,.split-modal-tool__panel,.split-modal-tool__alert{border:1px solid #e2e8f0;border-radius:28px;background:rgba(255,255,255,.9);box-shadow:0 24px 70px rgba(15,23,42,.08)}.split-modal-tool__hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(320px,.95fr);gap:22px;align-items:center;padding:24px;background:radial-gradient(circle at top right,rgba(239,68,68,.15),transparent 36%),linear-gradient(135deg,#fff,rgba(248,250,252,.92))}.split-modal-tool__hero h2{margin:0 0 8px;letter-spacing:-.04em}.split-modal-tool__hero p,.split-modal-tool__panel p{margin:0;color:#64748b}.split-modal-tool__hero span{display:inline-flex;margin-bottom:8px;padding:6px 10px;border-radius:999px;background:#fee2e2;color:#991b1b;font-size:.78rem;font-weight:950}.split-modal-tool__alert{padding:15px 17px;color:#475569;font-weight:850}.split-modal-tool__alert--error{border-color:#fecaca;background:#fff1f2;color:#991b1b}.split-modal-tool__alert--success{border-color:#bbf7d0;background:#f0fdf4;color:#166534}.split-modal-tool__workspace{display:grid;grid-template-columns:330px minmax(0,1fr);gap:20px;padding:18px;align-items:start}.split-modal-tool__sidebar{position:sticky;top:18px;display:grid;gap:14px}.split-modal-tool__panel{padding:16px}.split-modal-tool__panel h3{margin:0 0 10px}.split-modal-tool__file{display:flex;gap:12px;align-items:flex-start}.split-modal-tool__file>span{display:grid;width:48px;height:58px;place-items:center;border-radius:14px;background:#fff1f2;color:#dc2626;font-size:.72rem;font-weight:950}.split-modal-tool__file strong{display:block;overflow:hidden;max-width:220px;text-overflow:ellipsis;white-space:nowrap}.split-modal-tool__chips{display:flex;flex-wrap:wrap;gap:8px}.split-modal-tool__chips span{display:inline-flex;padding:7px 10px;border-radius:999px;background:#fee2e2;color:#991b1b;font-weight:950}.split-modal-tool__panel label{display:block;margin-bottom:8px;font-weight:950}.split-modal-tool__panel input{width:100%;box-sizing:border-box;min-height:46px;border:2px solid #e2e8f0;border-radius:16px;padding:10px 12px;font:inherit;font-weight:850}.split-modal-tool__panel input:focus{border-color:#ef4444;box-shadow:0 0 0 4px rgba(239,68,68,.12);outline:none}.split-modal-tool__panel input[aria-invalid=true]{border-color:#ef4444}.split-modal-tool__actions{display:grid;gap:10px}.split-modal-tool button{border:0;cursor:pointer;font:inherit;font-weight:950;transition:transform 140ms ease,opacity 140ms ease}.split-modal-tool__primary,.split-modal-tool__secondary{min-height:46px;padding:12px 16px;border-radius:999px}.split-modal-tool__primary{background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;box-shadow:0 16px 34px rgba(239,68,68,.24)}.split-modal-tool__primary--dark{background:linear-gradient(135deg,#0f172a,#334155);box-shadow:0 16px 34px rgba(15,23,42,.22)}.split-modal-tool__secondary{background:#e2e8f0;color:#334155}.split-modal-tool button:hover:not(:disabled){transform:translateY(-1px)}.split-modal-tool button:disabled{cursor:not-allowed;opacity:.45}.split-modal-tool__pages{display:grid;gap:14px}.split-modal-tool__quick{display:flex;justify-content:space-between;gap:12px;align-items:center}.split-modal-tool__quick div{display:flex;flex-wrap:wrap;gap:8px}.split-modal-tool__quick button{padding:8px 12px;border-radius:999px;background:#e2e8f0;color:#334155}.split-modal-tool__grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:12px}.split-modal-tool__page{display:grid;gap:10px;padding:10px;border:2px solid #e2e8f0;border-radius:20px;background:#fff;color:#0f172a;text-align:left;box-shadow:0 10px 24px rgba(15,23,42,.05)}.split-modal-tool__page--selected{border-color:#ef4444;background:#fff1f2;color:#991b1b;box-shadow:0 16px 34px rgba(239,68,68,.15)}.split-modal-tool__thumb{display:grid;min-height:150px;place-items:center;overflow:hidden;border:1px solid #e2e8f0;border-radius:14px;background:#f8fafc}.split-modal-tool__thumb img{display:block;width:100%;height:auto}.split-modal-tool__placeholder{display:grid;width:100%;min-height:130px;place-items:center;color:#94a3b8;background:#f1f5f9;font-size:1.25rem;font-weight:950}.split-modal-tool__placeholder--loading{background:linear-gradient(100deg,#f1f5f9 20%,#fff 45%,#f1f5f9 70%);background-size:220% 100%;animation:split-loading 1.4s ease-in-out infinite}.split-modal-tool__page>span:last-child{display:flex;justify-content:space-between;align-items:center}.split-modal-tool__page small{color:#64748b;text-transform:uppercase;font-weight:850}.pdf-modal{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:20px}.pdf-modal__backdrop{position:absolute;inset:0;background:rgba(15,23,42,.72);backdrop-filter:blur(6px)}.pdf-modal__panel{position:relative;z-index:1;display:grid;grid-template-rows:auto minmax(0,1fr);width:min(1120px,96vw);height:min(820px,92vh);overflow:hidden;border-radius:24px;background:#fff;box-shadow:0 30px 90px rgba(0,0,0,.35)}.pdf-modal__header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;border-bottom:1px solid #e2e8f0}.pdf-modal__header h2{margin:0;font-size:1.05rem}.pdf-modal__header div{display:flex;gap:10px}.pdf-modal__viewer{width:100%;height:100%;border:0;background:#f8fafc}.pdf-modal__download,.pdf-modal__close{border:0;cursor:pointer;font:inherit;font-weight:950}.pdf-modal__download{min-height:40px;padding:9px 14px;border-radius:999px;background:#ef4444;color:#fff}.pdf-modal__close{display:grid;width:40px;height:40px;place-items:center;border-radius:999px;background:#e2e8f0;color:#0f172a;font-size:1.35rem;line-height:1}@keyframes split-loading{0%{background-position:120% 0}100%{background-position:-120% 0}}@media (prefers-reduced-motion:reduce){.split-modal-tool button,.split-modal-tool__placeholder--loading{transition:none;animation:none}}@media (max-width:860px){.split-modal-tool__hero,.split-modal-tool__workspace{grid-template-columns:1fr}.split-modal-tool__sidebar{position:static}.split-modal-tool__quick{align-items:flex-start;flex-direction:column}.pdf-modal{padding:10px}.pdf-modal__panel{height:94vh;border-radius:18px}}
-  .split-modal-tool__thumb-button{display:grid;gap:10px;width:100%;padding:0;border:0;background:transparent;color:inherit;text-align:left}
-  .split-modal-tool__thumb img{transition:transform 180ms ease}
-  .split-modal-tool__page-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  .split-modal-tool__page-actions button{min-height:36px;padding:6px;border-radius:999px;background:#e2e8f0;color:#334155}
-  .split-modal-tool__page-actions button:last-child{background:#fee2e2;color:#991b1b}
 </style>

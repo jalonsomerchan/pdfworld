@@ -7,6 +7,9 @@
   export let subtitle = 'Suelta los archivos o pulsa para seleccionarlos';
   export let help = 'Solo PDF. Privado, local y sin subir nada a servidores.';
   export let multiple = false;
+  export let accept = 'application/pdf,.pdf';
+  export let acceptedTypes = ['application/pdf'];
+  export let acceptedExtensions = ['.pdf'];
   export let selectedLabel = '';
   export let acceptTransfers = true;
   export let onFiles: (files: File[]) => void | Promise<void> = () => {};
@@ -84,7 +87,8 @@
   }
 
   function isPdf(file: File) {
-    return file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const lowerName = file.name.toLowerCase();
+    return acceptedTypes.includes(file.type) || acceptedExtensions.some((extension) => lowerName.endsWith(extension));
   }
 </script>
 
@@ -116,7 +120,7 @@
   bind:this={inputElement}
   class="pdf-dropzone__input"
   type="file"
-  accept="application/pdf,.pdf"
+  {accept}
   {multiple}
   on:change={handleInputChange}
 />

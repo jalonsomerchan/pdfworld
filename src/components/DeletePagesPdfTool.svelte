@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onDestroy, tick } from 'svelte';
   import PdfDropzone from './PdfDropzone.svelte';
+  import PdfPageCard from './PdfPageCard.svelte';
   import PdfResultModal from './PdfResultModal.svelte';
   import { createPdfObjectUrl, formatFileSize, yieldToBrowser } from '../lib/pdfToolUtils';
   import { deletePagesFromPdfInBrowser, getPdfPageCount, type DeletePagesPdfResult } from '../lib/pdf/deletePagesPdf';
@@ -430,23 +431,21 @@
         <h3 id="delete-summary-title">{t.summaryTitle}</h3>
         <div class="delete-pages__page-grid" aria-label={t.rangeLabel}>
           {#each Array.from({ length: pageCount }, (_, index) => index + 1) as page}
-            <button
-              type="button"
-              class:delete-pages__page={true}
-              class:delete-pages__page--selected={pagesToDelete.includes(page)}
-              aria-pressed={pagesToDelete.includes(page)}
-              on:click={() => togglePageDelete(page)}
-            >
-              <span class="delete-pages__thumb">
-                {#if thumbStatus[page] === 'ready' && thumbUrls[page]}
-                  <img src={thumbUrls[page]} alt={`Página ${page}`} loading="lazy" />
-                {:else}
-                  <span>{thumbStatus[page] === 'pending' ? '…' : page}</span>
-                {/if}
-              </span>
-              <strong>Página {page}</strong>
-              <small>{pagesToDelete.includes(page) ? 'Eliminar' : 'Conservar'}</small>
-            </button>
+            <PdfPageCard
+              pageNumber={page}
+              title={`Página ${page}`}
+              thumbnailUrl={thumbUrls[page] ?? ''}
+              thumbnailStatus={thumbStatus[page] ?? 'pending'}
+              selected={pagesToDelete.includes(page)}
+              removed={!pagesToDelete.includes(page)}
+              rotation={0}
+              selectLabel={t.rangeLabel}
+              showRotate={false}
+              removeLabel="Conservar"
+              restoreLabel="Eliminar"
+              onToggle={() => togglePageDelete(page)}
+              onRemove={() => togglePageDelete(page)}
+            />
           {/each}
         </div>
         {#if pagesToDelete.length > 0 && !errorMessage}

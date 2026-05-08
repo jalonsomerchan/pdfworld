@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onDestroy, tick } from 'svelte';
   import PdfDropzone from './PdfDropzone.svelte';
+  import PdfPageCard from './PdfPageCard.svelte';
   import PdfResultModal from './PdfResultModal.svelte';
   import { getPdfPageCount, rotatePdfWithMapInBrowser, type PageRotationMap, type RotatePdfResult } from '../lib/pdf/rotatePdf';
   import { createPdfObjectUrl, formatFileSize, yieldToBrowser } from '../lib/pdfToolUtils';
@@ -227,11 +228,24 @@
 
       <section class="rotate-pro__pages" aria-label={t.title}>
         {#each pageStates as item}
-          <article class:rotate-pro__page-card={true} class:rotate-pro__page-card--changed={item.changed} class:rotate-pro__page-card--removed={!item.kept}>
-            <div class="rotate-pro__thumb-frame"><div class="rotate-pro__thumb" style={thumbStyle(item.rotation)}>{#if thumbStatus[item.page] === 'ready' && thumbUrls[item.page]}<img src={thumbUrls[item.page]} alt={`${t.page} ${item.page}`} loading="lazy" />{:else}<span class:rotate-pro__placeholder={true} class:rotate-pro__placeholder--loading={thumbStatus[item.page] !== 'failed'}>{item.page}</span>{/if}</div></div>
-            <div class="rotate-pro__page-meta"><strong>{t.page} {item.page}</strong><span>{item.rotation}°</span></div>
-            <div class="rotate-pro__page-actions"><button type="button" aria-label={`${t.rotateLeft} ${item.page}`} on:click={() => rotatePage(item.page, -90)}>↶</button><button type="button" aria-label={`${t.resetPage} ${item.page}`} on:click={() => resetPage(item.page)}>0°</button><button type="button" aria-label={`${t.rotateRight} ${item.page}`} on:click={() => rotatePage(item.page, 90)}>↷</button><button type="button" aria-label={`${item.kept ? t.removePage : t.restorePage} ${item.page}`} on:click={() => togglePageKeep(item.page)}>{item.kept ? '×' : '+'}</button></div>
-          </article>
+          <PdfPageCard
+            pageNumber={item.page}
+            title={`${t.page} ${item.page}`}
+            thumbnailUrl={thumbUrls[item.page] ?? ''}
+            thumbnailStatus={thumbStatus[item.page] ?? 'pending'}
+            selected={item.kept}
+            removed={!item.kept}
+            rotation={item.rotation}
+            selectLabel={item.kept ? t.removePage : t.restorePage}
+            rotateLeftLabel={t.rotateLeft}
+            rotateRightLabel={t.rotateRight}
+            removeLabel={t.removePage}
+            restoreLabel={t.restorePage}
+            onToggle={() => togglePageKeep(item.page)}
+            onRotateLeft={() => rotatePage(item.page, -90)}
+            onRotateRight={() => rotatePage(item.page, 90)}
+            onRemove={() => togglePageKeep(item.page)}
+          />
         {/each}
       </section>
     </div>

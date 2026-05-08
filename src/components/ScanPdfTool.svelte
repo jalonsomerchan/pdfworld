@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount, tick } from 'svelte';
   import { PDFDocument } from 'pdf-lib';
+  import PdfDropzone from './PdfDropzone.svelte';
   import PdfResultModal from './PdfResultModal.svelte';
   import { savePendingPdfTransfer } from '../lib/pdfTransfer';
   import { createPdfObjectUrl, yieldToBrowser } from '../lib/pdfToolUtils';
@@ -116,7 +117,6 @@
   ] as const;
 
   let videoElement: HTMLVideoElement;
-  let fileInput: HTMLInputElement;
   let pages: ScanPage[] = [];
   let stream: MediaStream | null = null;
   let isCameraOpen = false;
@@ -192,13 +192,15 @@
   async function handleImageInput(event: Event) {
     const input = event.currentTarget as HTMLInputElement;
     const files = Array.from(input.files ?? []).filter((file) => file.type.startsWith('image/'));
+    await addImageFiles(files);
+    input.value = '';
+  }
 
+  async function addImageFiles(files: File[]) {
     for (const file of files) {
       const dimensions = await getImageDimensions(file);
       addPage(file, file.name, dimensions.width, dimensions.height);
     }
-
-    input.value = '';
   }
 
   function addPage(blob: Blob, name: string, width: number, height: number) {
@@ -426,12 +428,18 @@
       <div class="scan-tool__section-head">
         <h3 id="upload-title">{t.upload}</h3>
       </div>
-      <button type="button" class="scan-tool__upload-button" on:click={() => fileInput.click()}>
-        <span aria-hidden="true">🖼️</span>
-        <strong>{t.fileButton}</strong>
-        <small>{t.fileHelp}</small>
-      </button>
-      <input bind:this={fileInput} class="scan-tool__file-input" type="file" accept="image/jpeg,image/png,image/webp" multiple on:change={handleImageInput} />
+      <PdfDropzone
+        multiple
+        title={t.fileButton}
+        activeTitle={t.fileButton}
+        subtitle={t.fileHelp}
+        help={t.fileHelp}
+        accept="image/jpeg,image/png,image/webp"
+        acceptedTypes={['image/jpeg', 'image/png', 'image/webp']}
+        acceptedExtensions={['.jpg', '.jpeg', '.png', '.webp']}
+        onFiles={addImageFiles}
+        onInvalidFiles={() => (errorMessage = t.error)}
+      />
     </section>
   </div>
 
