@@ -173,9 +173,9 @@ export const pdfTools = [
   {
     id: 'rotate-pdf',
     title: { es: 'Rotar PDF', en: 'Rotate PDF' },
-    description: { es: 'Gira páginas concretas de un documento PDF antes de descargarlo corregido.', en: 'Rotate specific pages in a PDF document before downloading the corrected file.' },
-    category: 'organizar', route: 'rotar-pdf', icon: '🔄', status: 'beta',
-    keywords: ['rotar pdf', 'girar pdf', 'rotate pdf'],
+    description: { es: 'Gira todas o algunas páginas de un PDF y descarga una copia corregida.', en: 'Rotate all or selected PDF pages and download a corrected copy.' },
+    category: 'organizar', route: 'rotar-pdf', icon: '🔄', status: 'available',
+    keywords: ['rotar pdf', 'girar pdf', 'rotate pdf', 'rotar paginas pdf', 'pdf-lib'],
     seo: {
       title: { es: 'Rotar PDF online en el navegador', en: 'Rotate PDF online in the browser' },
       description: { es: 'Rota páginas PDF localmente en el navegador, sin enviar documentos a servidores externos.', en: 'Rotate PDF pages locally in the browser without sending documents to external servers.' },
