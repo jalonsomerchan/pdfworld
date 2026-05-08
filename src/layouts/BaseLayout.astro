@@ -13,6 +13,14 @@ const { lang, title, description, path = '' } = Astro.props;
 const canonicalUrl = new URL(getLocalizedPath(lang, path), Astro.site);
 const alternateLinks = getAlternateLinks(path);
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'PDFWorld',
+  url: new URL(getLocalizedPath(lang), Astro.site).toString(),
+  inLanguage: lang,
+  description,
+};
 ---
 
 <!doctype html>
@@ -43,6 +51,7 @@ const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
     <meta name="twitter:description" content={description} />
     <link rel="icon" type="image/svg+xml" href={`${basePath}/favicon.svg`} />
     <link rel="icon" href={`${basePath}/favicon.ico`} />
+    <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
   </head>
   <body>
     <header class="site-header">
