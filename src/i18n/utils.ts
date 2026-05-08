@@ -2,8 +2,6 @@ import { defaultLang, locales, ui, type Lang } from './ui';
 
 export type { Lang };
 
-const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
-
 export function isLang(lang: string | undefined): lang is Lang {
   return Boolean(lang && locales.includes(lang as Lang));
 }
@@ -22,8 +20,7 @@ export function useTranslations(lang: Lang) {
 
 export function getLocalizedPath(lang: Lang, path = '') {
   const cleanPath = path.replace(/^\//, '').replace(/\/$/, '');
-  const localizedPath = cleanPath ? `/${lang}/${cleanPath}` : `/${lang}`;
-  return `${basePath}${localizedPath}`;
+  return cleanPath ? `/${lang}/${cleanPath}` : `/${lang}`;
 }
 
 export function getAlternateLinks(path = '') {
