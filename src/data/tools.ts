@@ -167,6 +167,14 @@ export const pdfTools = [
     seo: { title: { es: 'Escanear PDF online desde el móvil', en: 'Scan PDF online from mobile' }, description: { es: 'Escanea documentos con la cámara, genera un PDF en el navegador y pásalo automáticamente a otras herramientas PDF.', en: 'Scan documents with the camera, generate a PDF in the browser and send it automatically to other PDF tools.' } },
   },
   {
+    id: 'test-pdf-generator',
+    title: { es: 'Generar PDF de prueba', en: 'Generate test PDF' },
+    description: { es: 'Crea PDFs de ejemplo con páginas, texto, imágenes, tamaños y metadatos configurables.', en: 'Create sample PDFs with configurable pages, text, images, sizes and metadata.' },
+    category: 'utilidad', route: 'generar-pdf-prueba', icon: '🧪', status: 'available',
+    keywords: ['generar pdf prueba', 'pdf ejemplo', 'test pdf', 'sample pdf', 'lorem ipsum', 'pdf-lib'],
+    seo: { title: { es: 'Generar PDF de prueba online y privado', en: 'Generate a private online test PDF' }, description: { es: 'Genera PDFs de prueba configurables directamente en el navegador: páginas, tamaños, texto Lorem Ipsum, imágenes y metadatos.', en: 'Generate configurable test PDFs directly in the browser: pages, sizes, Lorem Ipsum text, images and metadata.' } },
+  },
+  {
     id: 'jpg-to-pdf',
     title: { es: 'JPG a PDF', en: 'JPG to PDF' },
     description: { es: 'Convierte imágenes JPG en un documento PDF listo para descargar.', en: 'Convert JPG images into a PDF document ready to download.' },
