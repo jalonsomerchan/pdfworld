@@ -3,8 +3,8 @@ import { defineConfig } from 'astro/config';
 import svelte from '@astrojs/svelte';
 
 export default defineConfig({
-  site: 'https://jalonsomerchan.github.io',
-  base: '/pdfworld',
+  site: 'https://pdfworld.alon.one',
+  base: '/',
   integrations: [svelte()],
   i18n: {
     defaultLocale: 'es',
