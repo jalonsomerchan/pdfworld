@@ -1,0 +1,80 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import CompressPdfTool from '../../components/CompressPdfTool.svelte';
+import { getLocalizedPath, isLang, type Lang } from '../../i18n/utils';
+import { locales } from '../../i18n/ui';
+
+export function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params;
+
+if (!isLang(lang)) {
+  return Astro.redirect(getLocalizedPath('es', 'comprimir-pdf'));
+}
+
+const copy = {
+  es: {
+    title: 'Comprimir PDF online gratis y privado',
+    description: 'Comprime PDF directamente en tu navegador con una estrategia local basada en pdf.js y pdf-lib. Sin subir archivos a ningún servidor.',
+    badge: '100% privado · Sin subidas · En tu navegador',
+    h1: 'Comprimir PDF online',
+    lead: 'Reduce el peso de un PDF desde el navegador. La herramienta rasteriza páginas, aplica compresión configurable y genera un nuevo documento localmente.',
+    howTitle: 'Cómo comprimir un PDF',
+    step1: 'Selecciona un PDF desde tu dispositivo.',
+    step2: 'Elige el nivel de compresión: suave, recomendado o máximo.',
+    step3: 'Genera el PDF comprimido y compara el tamaño antes de descargarlo.',
+    privacyTitle: 'Comprimir PDF sin subir archivos',
+    privacyText: 'Todo el proceso ocurre en tu navegador: pdf.js renderiza las páginas y pdf-lib crea el nuevo PDF comprimido.',
+    footer: 'Tus archivos se procesan localmente en tu navegador.',
+  },
+  en: {
+    title: 'Compress PDF online for free and privately',
+    description: 'Compress PDFs directly in your browser with a local strategy based on pdf.js and pdf-lib. No files are uploaded to any server.',
+    badge: '100% private · No uploads · In your browser',
+    h1: 'Compress PDF online',
+    lead: 'Reduce PDF size from the browser. The tool rasterizes pages, applies configurable compression and generates a new document locally.',
+    howTitle: 'How to compress a PDF',
+    step1: 'Select a PDF from your device.',
+    step2: 'Choose a compression level: soft, recommended or maximum.',
+    step3: 'Generate the compressed PDF and compare the size before downloading it.',
+    privacyTitle: 'Compress PDF without uploads',
+    privacyText: 'Everything happens in your browser: pdf.js renders pages and pdf-lib creates the new compressed PDF.',
+    footer: 'Your files are processed locally in your browser.',
+  },
+} as const;
+
+const pageCopy = copy[lang as Lang];
+---
+
+<BaseLayout
+  lang={lang}
+  title={pageCopy.title}
+  description={pageCopy.description}
+  path="comprimir-pdf"
+>
+  <section class="hero">
+    <span class="badge">{pageCopy.badge}</span>
+    <h1>{pageCopy.h1}</h1>
+    <p class="lead">{pageCopy.lead}</p>
+  </section>
+
+  <CompressPdfTool client:load lang={lang} />
+
+  <section aria-labelledby="how-title">
+    <h2 id="how-title">{pageCopy.howTitle}</h2>
+    <ol>
+      <li>{pageCopy.step1}</li>
+      <li>{pageCopy.step2}</li>
+      <li>{pageCopy.step3}</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>{pageCopy.privacyTitle}</h2>
+    <p>{pageCopy.privacyText}</p>
+  </section>
+
+  <Fragment slot="footer">{pageCopy.footer}</Fragment>
+</BaseLayout>
