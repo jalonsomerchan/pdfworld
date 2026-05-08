@@ -1,0 +1,81 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { getLocalizedPath, isLang, useTranslations, type Lang } from '../../../i18n/utils';
+import { locales } from '../../../i18n/ui';
+import {
+  getCategoryById,
+  getToolsByCategory,
+  isToolCategoryId,
+  pdfToolCategories,
+  toolStatusLabels,
+} from '../../../data/tools';
+
+export function getStaticPaths() {
+  return locales.flatMap((lang) =>
+    pdfToolCategories.map((category) => ({
+      params: {
+        lang,
+        category: category.id,
+      },
+    })),
+  );
+}
+
+const { lang, category } = Astro.params;
+
+if (!isLang(lang)) {
+  return Astro.redirect(getLocalizedPath('es'));
+}
+
+if (!isToolCategoryId(category)) {
+  return Astro.redirect(getLocalizedPath(lang, 'categoria/organizar'));
+}
+
+const t = useTranslations(lang as Lang);
+const currentCategory = getCategoryById(category);
+const tools = getToolsByCategory(category);
+---
+
+<BaseLayout
+  lang={lang}
+  title={currentCategory.seo.title[lang]}
+  description={currentCategory.seo.description[lang]}
+  path={`categoria/${currentCategory.id}`}
+>
+  <section class="hero">
+    <span class="badge">{t('home.privacyBadge')}</span>
+    <h1>{currentCategory.title[lang]}</h1>
+    <p class="lead">{currentCategory.description[lang]}</p>
+  </section>
+
+  <section aria-labelledby="category-tools-title">
+    <h2 id="category-tools-title">{t('category.toolsTitle')}</h2>
+
+    {tools.length > 0 ? (
+      <div class="grid">
+        {tools.map((tool) => {
+          const isAvailable = tool.status === 'available';
+          const href = isAvailable ? getLocalizedPath(lang, tool.route) : undefined;
+          const Tag = isAvailable ? 'a' : 'article';
+
+          return (
+            <Tag class:list={['tool-card', { 'tool-card--disabled': !isAvailable }]} href={href} aria-disabled={!isAvailable ? 'true' : undefined}>
+              <div class="tool-card__title">
+                <span aria-hidden="true">{tool.icon}</span>
+                <strong>{tool.title[lang]}</strong>
+              </div>
+              <p>{tool.description[lang]}</p>
+              <span class:list={['status-pill', `status-pill--${tool.status}`]}>
+                {toolStatusLabels[tool.status][lang]}
+              </span>
+            </Tag>
+          );
+        })}
+      </div>
+    ) : (
+      <p>{t('category.empty')}</p>
+    )}
+  </section>
+
+  <Fragment slot="footer">{t('footer.privacy')}</Fragment>
+</BaseLayout>
