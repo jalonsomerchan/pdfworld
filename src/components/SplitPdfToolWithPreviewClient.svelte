@@ -5,10 +5,10 @@
 
   export let lang: Lang = 'es';
 
-  let Component: typeof import('./SplitPdfToolWithPreview.svelte').default | null = null;
+  let Component: typeof import('./SplitPdfToolWithModal.svelte').default | null = null;
 
   onMount(async () => {
-    Component = (await import('./SplitPdfToolWithPreview.svelte')).default;
+    Component = (await import('./SplitPdfToolWithModal.svelte')).default;
   });
 </script>
 
