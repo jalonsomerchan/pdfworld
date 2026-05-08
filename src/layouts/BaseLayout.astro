@@ -12,7 +12,6 @@ interface Props {
 const { lang, title, description, path = '' } = Astro.props;
 const canonicalUrl = new URL(getLocalizedPath(lang, path), Astro.site);
 const alternateLinks = getAlternateLinks(path);
-const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 const structuredData = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
@@ -49,8 +48,8 @@ const structuredData = {
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
-    <link rel="icon" type="image/svg+xml" href={`${basePath}/favicon.svg`} />
-    <link rel="icon" href={`${basePath}/favicon.ico`} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
     <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
   </head>
   <body>
