@@ -134,6 +134,20 @@ export const pdfTools = [
     },
   },
   {
+    id: 'reorder-pdf',
+    title: { es: 'Ordenar PDF', en: 'Reorder PDF' },
+    description: { es: 'Reordena páginas, elimina las que no necesites y descarga una copia nueva.', en: 'Reorder pages, remove the ones you do not need and download a new copy.' },
+    category: 'organizar',
+    route: 'ordenar-pdf',
+    icon: '↕️',
+    status: 'available',
+    keywords: ['ordenar pdf', 'reordenar pdf', 'mover páginas pdf', 'reorder pdf', 'pdf-lib', 'pdf.js'],
+    seo: {
+      title: { es: 'Ordenar páginas PDF online gratis y privado', en: 'Reorder PDF pages online for free and privately' },
+      description: { es: 'Reordena páginas de un PDF, elimina las que no necesites y descarga un nuevo documento. Todo funciona localmente en tu navegador.', en: 'Reorder PDF pages, remove pages you do not need and download a new document. Everything runs locally in your browser.' },
+    },
+  },
+  {
     id: 'split-pdf',
     title: { es: 'Dividir PDF', en: 'Split PDF' },
     description: { es: 'Separa páginas o rangos de un PDF para crear nuevos documentos.', en: 'Separate pages or ranges from a PDF to create new documents.' },
