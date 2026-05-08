@@ -16,12 +16,15 @@
   const labels = {
     es: {
       title: 'Sube tus PDF',
-      description: 'Selecciona dos o más archivos PDF, ordénalos y descarga un único documento combinado. Todo ocurre en tu navegador.',
-      dropText: 'Arrastra aquí tus PDF o pulsa para seleccionarlos',
-      fileHelp: 'Solo archivos PDF. No se suben a ningún servidor.',
+      description: 'Selecciona dos o más archivos PDF, arrástralos, ordénalos y descarga un único documento combinado. Todo ocurre en tu navegador.',
+      dropTitle: 'Arrastra tus PDF aquí',
+      dropText: 'Suelta los archivos o pulsa para seleccionarlos',
+      dropActive: 'Suelta para añadirlos a la lista',
+      fileHelp: 'Solo PDF. Privado, local y sin subir nada a servidores.',
       selectedFiles: 'Archivos seleccionados',
       noFiles: 'Todavía no has seleccionado ningún PDF.',
       pages: 'páginas',
+      filesReady: 'PDF listos',
       moveUp: 'Subir',
       moveDown: 'Bajar',
       remove: 'Eliminar',
@@ -37,12 +40,15 @@
     },
     en: {
       title: 'Upload your PDFs',
-      description: 'Select two or more PDF files, arrange them and download one combined document. Everything happens in your browser.',
-      dropText: 'Drop your PDFs here or click to select them',
-      fileHelp: 'PDF files only. They are never uploaded to any server.',
+      description: 'Select two or more PDF files, drag them in, arrange them and download one combined document. Everything happens in your browser.',
+      dropTitle: 'Drag your PDFs here',
+      dropText: 'Drop files or click to select them',
+      dropActive: 'Drop to add them to the list',
+      fileHelp: 'PDF only. Private, local and no server uploads.',
       selectedFiles: 'Selected files',
       noFiles: 'No PDF files selected yet.',
       pages: 'pages',
+      filesReady: 'PDF files ready',
       moveUp: 'Move up',
       moveDown: 'Move down',
       remove: 'Remove',
@@ -60,10 +66,12 @@
 
   $: t = labels[lang] ?? labels.es;
   $: canMerge = files.length >= 2 && files.every((item) => !item.error) && !isMerging;
+  $: totalPages = files.reduce((sum, item) => sum + (item.pageCount ?? 0), 0);
 
   let files: PdfFileItem[] = [];
   let inputElement: HTMLInputElement;
   let isDragging = false;
+  let dragDepth = 0;
   let isMerging = false;
   let statusMessage = '';
   let errorMessage = '';
@@ -78,19 +86,29 @@
     input.value = '';
   }
 
-  async function handleDrop(event: DragEvent) {
+  function handleDragEnter(event: DragEvent) {
     event.preventDefault();
-    isDragging = false;
-    await addFiles(event.dataTransfer?.files ?? null);
+    dragDepth += 1;
+    isDragging = true;
   }
 
   function handleDragOver(event: DragEvent) {
     event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
     isDragging = true;
   }
 
-  function handleDragLeave() {
+  function handleDragLeave(event: DragEvent) {
+    event.preventDefault();
+    dragDepth = Math.max(0, dragDepth - 1);
+    isDragging = dragDepth > 0;
+  }
+
+  async function handleDrop(event: DragEvent) {
+    event.preventDefault();
+    dragDepth = 0;
     isDragging = false;
+    await addFiles(event.dataTransfer?.files ?? null);
   }
 
   async function addFiles(fileList: FileList | null) {
@@ -207,21 +225,44 @@
 
 <section class="merge-tool" aria-labelledby="merge-tool-title">
   <div class="merge-tool__intro">
-    <h2 id="merge-tool-title">{t.title}</h2>
-    <p>{t.description}</p>
+    <div>
+      <span class="merge-tool__eyebrow">PDFWorld</span>
+      <h2 id="merge-tool-title">{t.title}</h2>
+      <p>{t.description}</p>
+    </div>
+
+    {#if files.length > 0}
+      <div class="merge-tool__summary" aria-label={t.filesReady}>
+        <strong>{files.length}</strong>
+        <span>{t.filesReady}</span>
+        {#if totalPages > 0}
+          <small>{totalPages} {t.pages}</small>
+        {/if}
+      </div>
+    {/if}
   </div>
 
   <button
     type="button"
     class={`merge-tool__dropzone${isDragging ? ' merge-tool__dropzone--active' : ''}`}
+    aria-describedby="merge-tool-help"
     on:click={openFileDialog}
     on:drop={handleDrop}
+    on:dragenter={handleDragEnter}
     on:dragover={handleDragOver}
     on:dragleave={handleDragLeave}
   >
-    <span aria-hidden="true">📄</span>
-    <strong>{t.dropText}</strong>
-    <small>{t.fileHelp}</small>
+    <span class="merge-tool__dropzone-glow" aria-hidden="true"></span>
+    <span class="merge-tool__dropzone-grid" aria-hidden="true"></span>
+    <span class="merge-tool__icon-stack" aria-hidden="true">
+      <span class="merge-tool__icon-card merge-tool__icon-card--back">PDF</span>
+      <span class="merge-tool__icon-card merge-tool__icon-card--front">+</span>
+    </span>
+    <span class="merge-tool__dropzone-copy">
+      <strong>{isDragging ? t.dropActive : t.dropTitle}</strong>
+      <span>{t.dropText}</span>
+      <small id="merge-tool-help">{t.fileHelp}</small>
+    </span>
   </button>
 
   <input
@@ -257,7 +298,8 @@
           <li class={item.error ? 'merge-tool__file--error' : undefined}>
             <div class="merge-tool__file-main">
               <span class="merge-tool__file-index">{index + 1}</span>
-              <div>
+              <span class="merge-tool__file-icon" aria-hidden="true">PDF</span>
+              <div class="merge-tool__file-text">
                 <strong>{item.file.name}</strong>
                 <p>
                   {formatSize(item.file.size)}
@@ -283,25 +325,66 @@
   </div>
 
   <button type="button" class="merge-tool__primary" disabled={!canMerge} on:click={mergePdfFiles}>
-    {isMerging ? t.merging : t.merge}
+    <span>{isMerging ? t.merging : t.merge}</span>
   </button>
 </section>
 
 <style>
   .merge-tool {
+    position: relative;
     display: grid;
-    gap: 22px;
-    margin: 32px 0 48px;
-    padding: 24px;
-    border: 1px solid #e2e8f0;
-    border-radius: 28px;
-    background: rgba(255, 255, 255, 0.86);
-    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.08);
+    gap: 24px;
+    margin: 34px 0 52px;
+    padding: clamp(20px, 3vw, 32px);
+    overflow: hidden;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 32px;
+    background:
+      radial-gradient(circle at top left, rgba(239, 68, 68, 0.12), transparent 34%),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.88));
+    box-shadow: 0 30px 90px rgba(15, 23, 42, 0.11);
+  }
+
+  .merge-tool::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(120deg, transparent 20%, rgba(255, 255, 255, 0.65), transparent 80%);
+    transform: translateX(-110%);
+    animation: merge-tool-sheen 7s ease-in-out infinite;
+  }
+
+  .merge-tool__intro {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
   }
 
   .merge-tool__intro h2,
   .merge-tool__files-header h3 {
     margin: 0;
+  }
+
+  .merge-tool__intro h2 {
+    font-size: clamp(1.65rem, 3vw, 2.25rem);
+    letter-spacing: -0.04em;
+  }
+
+  .merge-tool__eyebrow {
+    display: inline-flex;
+    margin-bottom: 8px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: rgba(239, 68, 68, 0.1);
+    color: #b91c1c;
+    font-size: 0.78rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
 
   .merge-tool__intro p,
@@ -311,35 +394,153 @@
     color: #64748b;
   }
 
-  .merge-tool__dropzone {
+  .merge-tool__summary {
     display: grid;
-    min-height: 190px;
+    min-width: 132px;
+    gap: 2px;
+    padding: 14px 16px;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.78);
+    text-align: right;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+  }
+
+  .merge-tool__summary strong {
+    color: #0f172a;
+    font-size: 1.8rem;
+    line-height: 1;
+  }
+
+  .merge-tool__summary span,
+  .merge-tool__summary small {
+    color: #64748b;
+    font-weight: 800;
+  }
+
+  .merge-tool__dropzone {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    min-height: 250px;
     place-items: center;
-    gap: 8px;
+    gap: 16px;
     width: 100%;
-    padding: 28px;
-    border: 2px dashed #cbd5e1;
-    border-radius: 24px;
-    background: #f8fafc;
+    padding: clamp(28px, 6vw, 48px);
+    overflow: hidden;
+    border: 2px dashed rgba(148, 163, 184, 0.95);
+    border-radius: 28px;
+    background:
+      linear-gradient(135deg, rgba(248, 250, 252, 0.94), rgba(255, 255, 255, 0.82)),
+      radial-gradient(circle at center, rgba(239, 68, 68, 0.09), transparent 45%);
     color: #0f172a;
     cursor: pointer;
     text-align: center;
     font: inherit;
+    transition:
+      transform 180ms ease,
+      border-color 180ms ease,
+      background 180ms ease,
+      box-shadow 180ms ease;
   }
 
-  .merge-tool__dropzone--active,
-  .merge-tool__dropzone:focus-visible,
-  .merge-tool__dropzone:hover {
+  .merge-tool__dropzone:hover,
+  .merge-tool__dropzone:focus-visible {
     border-color: #ef4444;
-    background: #fff1f2;
+    box-shadow: 0 24px 70px rgba(239, 68, 68, 0.16);
     outline: none;
+    transform: translateY(-2px);
   }
 
-  .merge-tool__dropzone span {
-    font-size: 2.3rem;
+  .merge-tool__dropzone--active {
+    border-color: #ef4444;
+    background:
+      linear-gradient(135deg, rgba(255, 241, 242, 0.98), rgba(255, 255, 255, 0.92)),
+      radial-gradient(circle at center, rgba(239, 68, 68, 0.2), transparent 50%);
+    box-shadow: 0 28px 80px rgba(239, 68, 68, 0.22);
+    transform: scale(1.01);
   }
 
-  .merge-tool__dropzone small {
+  .merge-tool__dropzone-glow {
+    position: absolute;
+    inset: auto auto -90px 50%;
+    z-index: -1;
+    width: 280px;
+    height: 180px;
+    border-radius: 999px;
+    background: rgba(239, 68, 68, 0.25);
+    filter: blur(48px);
+    transform: translateX(-50%);
+  }
+
+  .merge-tool__dropzone-grid {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    opacity: 0.5;
+    background-image:
+      linear-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+    background-size: 28px 28px;
+    mask-image: radial-gradient(circle at center, black, transparent 72%);
+  }
+
+  .merge-tool__icon-stack {
+    position: relative;
+    width: 96px;
+    height: 82px;
+  }
+
+  .merge-tool__icon-card {
+    position: absolute;
+    display: grid;
+    width: 62px;
+    height: 74px;
+    place-items: center;
+    border-radius: 16px;
+    background: #fff;
+    color: #ef4444;
+    font-size: 0.9rem;
+    font-weight: 950;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.15);
+  }
+
+  .merge-tool__icon-card--back {
+    left: 10px;
+    top: 4px;
+    color: #64748b;
+    transform: rotate(-10deg);
+  }
+
+  .merge-tool__icon-card--front {
+    right: 8px;
+    bottom: 0;
+    border: 1px solid rgba(239, 68, 68, 0.18);
+    font-size: 2rem;
+    transform: rotate(8deg);
+    animation: merge-tool-float 3.4s ease-in-out infinite;
+  }
+
+  .merge-tool__dropzone--active .merge-tool__icon-card--front {
+    animation: merge-tool-pop 650ms ease both;
+  }
+
+  .merge-tool__dropzone-copy {
+    display: grid;
+    gap: 6px;
+  }
+
+  .merge-tool__dropzone-copy strong {
+    font-size: clamp(1.2rem, 2.4vw, 1.55rem);
+    letter-spacing: -0.03em;
+  }
+
+  .merge-tool__dropzone-copy span {
+    color: #334155;
+    font-weight: 800;
+  }
+
+  .merge-tool__dropzone-copy small {
     color: #64748b;
   }
 
@@ -353,6 +554,8 @@
   }
 
   .merge-tool__files {
+    position: relative;
+    z-index: 1;
     display: grid;
     gap: 14px;
   }
@@ -383,9 +586,18 @@
     justify-content: space-between;
     gap: 16px;
     padding: 14px;
-    border: 1px solid #e2e8f0;
-    border-radius: 18px;
-    background: #fff;
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 12px 34px rgba(15, 23, 42, 0.06);
+    animation: merge-tool-item-in 260ms ease both;
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  }
+
+  .merge-tool__list li:hover {
+    border-color: rgba(239, 68, 68, 0.28);
+    box-shadow: 0 18px 44px rgba(15, 23, 42, 0.1);
+    transform: translateY(-1px);
   }
 
   .merge-tool__file--error {
@@ -393,16 +605,42 @@
     background: #fff1f2 !important;
   }
 
-  .merge-tool__file-index {
+  .merge-tool__file-index,
+  .merge-tool__file-icon {
     display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    font-weight: 950;
+  }
+
+  .merge-tool__file-index {
     width: 34px;
     height: 34px;
-    flex: 0 0 34px;
-    place-items: center;
     border-radius: 999px;
     background: #0f172a;
     color: #fff;
-    font-weight: 900;
+  }
+
+  .merge-tool__file-icon {
+    width: 42px;
+    height: 48px;
+    border-radius: 12px;
+    background: #fff1f2;
+    color: #dc2626;
+    font-size: 0.72rem;
+    box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.14);
+  }
+
+  .merge-tool__file-text {
+    min-width: 0;
+  }
+
+  .merge-tool__file-text strong {
+    display: block;
+    overflow: hidden;
+    max-width: min(48vw, 520px);
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .merge-tool__file-error,
@@ -422,14 +660,21 @@
     border-radius: 999px;
     cursor: pointer;
     font: inherit;
-    font-weight: 800;
+    font-weight: 850;
+    transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
   }
 
   .merge-tool__file-actions button,
   .merge-tool__secondary {
-    padding: 8px 11px;
+    padding: 8px 12px;
     background: #e2e8f0;
     color: #334155;
+  }
+
+  .merge-tool__file-actions button:hover:not(:disabled),
+  .merge-tool__secondary:hover {
+    background: #cbd5e1;
+    transform: translateY(-1px);
   }
 
   .merge-tool__file-actions button:disabled,
@@ -439,34 +684,114 @@
   }
 
   .merge-tool__primary {
+    position: relative;
     justify-self: start;
-    padding: 13px 20px;
-    background: #ef4444;
+    padding: 14px 22px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
     color: #fff;
+    box-shadow: 0 16px 34px rgba(239, 68, 68, 0.28);
+  }
+
+  .merge-tool__primary:not(:disabled):hover {
+    box-shadow: 0 20px 42px rgba(239, 68, 68, 0.34);
+    transform: translateY(-2px);
+  }
+
+  .merge-tool__primary span {
+    position: relative;
+    z-index: 1;
   }
 
   .merge-tool__message {
+    position: relative;
+    z-index: 1;
     margin: 0;
-    font-weight: 800;
+    padding: 12px 14px;
+    border-radius: 16px;
+    font-weight: 850;
+  }
+
+  .merge-tool__message--error {
+    background: #fff1f2;
   }
 
   .merge-tool__message--success {
+    background: #ecfdf5;
     color: #166534;
+  }
+
+  @keyframes merge-tool-sheen {
+    0%, 55% { transform: translateX(-110%); }
+    100% { transform: translateX(110%); }
+  }
+
+  @keyframes merge-tool-float {
+    0%, 100% { transform: translateY(0) rotate(8deg); }
+    50% { transform: translateY(-6px) rotate(5deg); }
+  }
+
+  @keyframes merge-tool-pop {
+    0% { transform: scale(0.9) rotate(8deg); }
+    55% { transform: scale(1.08) rotate(2deg); }
+    100% { transform: scale(1) rotate(8deg); }
+  }
+
+  @keyframes merge-tool-item-in {
+    from { opacity: 0; transform: translateY(8px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .merge-tool::before,
+    .merge-tool__icon-card--front,
+    .merge-tool__dropzone--active .merge-tool__icon-card--front,
+    .merge-tool__list li {
+      animation: none;
+    }
+
+    .merge-tool__dropzone,
+    .merge-tool__list li,
+    .merge-tool__file-actions button,
+    .merge-tool__secondary,
+    .merge-tool__primary {
+      transition: none;
+    }
   }
 
   @media (max-width: 720px) {
     .merge-tool {
       padding: 18px;
+      border-radius: 24px;
     }
 
+    .merge-tool__intro,
     .merge-tool__list li,
     .merge-tool__files-header {
       align-items: flex-start;
       flex-direction: column;
     }
 
+    .merge-tool__summary {
+      width: 100%;
+      text-align: left;
+    }
+
+    .merge-tool__dropzone {
+      min-height: 220px;
+      border-radius: 22px;
+    }
+
+    .merge-tool__file-main {
+      align-items: flex-start;
+    }
+
     .merge-tool__file-actions {
       justify-content: flex-start;
+    }
+
+    .merge-tool__file-text strong {
+      max-width: 62vw;
     }
   }
 </style>
