@@ -159,6 +159,14 @@ export const pdfTools = [
     seo: { title: { es: 'Comprimir PDF online privado', en: 'Compress PDF online privately' }, description: { es: 'Comprime PDF directamente en tu navegador con una estrategia local basada en pdf.js y pdf-lib, sin subir archivos.', en: 'Compress PDFs directly in your browser with a local strategy based on pdf.js and pdf-lib, without uploads.' } },
   },
   {
+    id: 'scan-pdf',
+    title: { es: 'Escanear PDF', en: 'Scan PDF' },
+    description: { es: 'Escanea páginas con la cámara del móvil y crea un PDF listo para descargar o editar.', en: 'Scan pages with your mobile camera and create a PDF ready to download or edit.' },
+    category: 'convertir', route: 'escanear-pdf', icon: '📷', status: 'available',
+    keywords: ['escanear pdf', 'camara a pdf', 'scanner pdf', 'scan pdf', 'imagen a pdf', 'pdf-lib', 'getUserMedia'],
+    seo: { title: { es: 'Escanear PDF online desde el móvil', en: 'Scan PDF online from mobile' }, description: { es: 'Escanea documentos con la cámara, genera un PDF en el navegador y pásalo automáticamente a otras herramientas PDF.', en: 'Scan documents with the camera, generate a PDF in the browser and send it automatically to other PDF tools.' } },
+  },
+  {
     id: 'jpg-to-pdf',
     title: { es: 'JPG a PDF', en: 'JPG to PDF' },
     description: { es: 'Convierte imágenes JPG en un documento PDF listo para descargar.', en: 'Convert JPG images into a PDF document ready to download.' },
