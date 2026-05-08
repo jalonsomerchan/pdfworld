@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import RotatePdfTool from '../../components/RotatePdfToolPro.svelte';
+import RotatePdfTool from '../../components/RotatePdfToolProFixed.svelte';
 import { getLocalizedPath, isLang, type Lang } from '../../i18n/utils';
 import { locales } from '../../i18n/ui';
 
@@ -24,7 +24,7 @@ const copy = {
     howTitle: 'Cómo rotar un PDF',
     step1: 'Selecciona un archivo PDF desde tu dispositivo.',
     step2: 'Usa las miniaturas para girar páginas concretas o aplica giros rápidos a todo el documento.',
-    step3: 'Revisa el resumen de cambios y descarga una copia nueva del PDF rotado.',
+    step3: 'Pulsa generar y descargar para crear automáticamente la copia rotada en tu navegador.',
     privacyTitle: 'Rotar PDF sin subir archivos',
     privacyText: 'La previsualización se genera en el navegador con pdf.js y la modificación final se hace con pdf-lib. El archivo original no se modifica ni se envía a ningún servidor.',
     footer: 'Tus archivos se procesan localmente en tu navegador.',
@@ -38,7 +38,7 @@ const copy = {
     howTitle: 'How to rotate a PDF',
     step1: 'Select a PDF file from your device.',
     step2: 'Use thumbnails to rotate specific pages or apply quick rotations to the whole document.',
-    step3: 'Review the change summary and download a new rotated PDF copy.',
+    step3: 'Click generate and download to automatically create the rotated copy in your browser.',
     privacyTitle: 'Rotate PDF without uploads',
     privacyText: 'The preview is generated in the browser with pdf.js and the final edit is made with pdf-lib. The original file is not changed and is never sent to a server.',
     footer: 'Your files are processed locally in your browser.',
