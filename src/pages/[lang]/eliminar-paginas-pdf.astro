@@ -1,0 +1,80 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import DeletePagesPdfTool from '../../components/DeletePagesPdfTool.svelte';
+import { getLocalizedPath, isLang, type Lang } from '../../i18n/utils';
+import { locales } from '../../i18n/ui';
+
+export function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params;
+
+if (!isLang(lang)) {
+  return Astro.redirect(getLocalizedPath('es', 'eliminar-paginas-pdf'));
+}
+
+const copy = {
+  es: {
+    title: 'Eliminar páginas PDF online gratis y privado',
+    description: 'Elimina páginas concretas de un PDF directamente en tu navegador. Gratis, privado y sin subir archivos a ningún servidor.',
+    badge: '100% privado · Sin subidas · En tu navegador',
+    h1: 'Eliminar páginas de un PDF',
+    lead: 'Quita páginas sueltas o rangos completos de un PDF y descarga una copia limpia. El archivo original no se modifica.',
+    howTitle: 'Cómo eliminar páginas de un PDF',
+    step1: 'Selecciona un archivo PDF desde tu dispositivo.',
+    step2: 'Introduce las páginas o rangos a eliminar, por ejemplo 2,4-6.',
+    step3: 'Revisa qué páginas se conservarán y descarga una copia nueva.',
+    privacyTitle: 'Eliminar páginas sin subir archivos',
+    privacyText: 'Todo el proceso ocurre en tu navegador con pdf-lib. PDFWorld no recibe ni almacena tus documentos.',
+    footer: 'Tus archivos se procesan localmente en tu navegador.',
+  },
+  en: {
+    title: 'Delete PDF pages online for free and privately',
+    description: 'Delete specific pages from a PDF directly in your browser. Free, private and without uploading files to any server.',
+    badge: '100% private · No uploads · In your browser',
+    h1: 'Delete pages from a PDF',
+    lead: 'Remove individual pages or full ranges from a PDF and download a clean copy. The original file is not modified.',
+    howTitle: 'How to delete pages from a PDF',
+    step1: 'Select a PDF file from your device.',
+    step2: 'Enter the pages or ranges to delete, for example 2,4-6.',
+    step3: 'Review which pages will be kept and download a new copy.',
+    privacyTitle: 'Delete pages without uploads',
+    privacyText: 'Everything happens in your browser with pdf-lib. PDFWorld does not receive or store your documents.',
+    footer: 'Your files are processed locally in your browser.',
+  },
+} as const;
+
+const pageCopy = copy[lang as Lang];
+---
+
+<BaseLayout
+  lang={lang}
+  title={pageCopy.title}
+  description={pageCopy.description}
+  path="eliminar-paginas-pdf"
+>
+  <section class="hero">
+    <span class="badge">{pageCopy.badge}</span>
+    <h1>{pageCopy.h1}</h1>
+    <p class="lead">{pageCopy.lead}</p>
+  </section>
+
+  <DeletePagesPdfTool client:load lang={lang} />
+
+  <section aria-labelledby="how-title">
+    <h2 id="how-title">{pageCopy.howTitle}</h2>
+    <ol>
+      <li>{pageCopy.step1}</li>
+      <li>{pageCopy.step2}</li>
+      <li>{pageCopy.step3}</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>{pageCopy.privacyTitle}</h2>
+    <p>{pageCopy.privacyText}</p>
+  </section>
+
+  <Fragment slot="footer">{pageCopy.footer}</Fragment>
+</BaseLayout>
