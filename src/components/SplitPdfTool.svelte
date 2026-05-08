@@ -1,6 +1,7 @@
 <script lang="ts">
   import { PDFDocument } from 'pdf-lib';
   import { saveAs } from 'file-saver';
+  import JSZip from 'jszip';
   import PdfDropzone from './PdfDropzone.svelte';
 
   type Lang = 'es' | 'en';
@@ -16,7 +17,7 @@
     es: {
       eyebrow: 'Procesamiento local',
       title: 'Divide tu PDF por páginas',
-      description: 'Carga un único PDF, escribe las páginas o rangos que quieres extraer y descarga un nuevo documento. El archivo no se sube a ningún servidor.',
+      description: 'Carga un único PDF, selecciona visualmente las páginas que quieres extraer y descarga un documento único o un ZIP con PDFs separados. El archivo no se sube a ningún servidor.',
       dropTitle: 'Arrastra tu PDF aquí',
       dropActive: 'Suelta el PDF para cargarlo',
       dropText: 'Suelta el archivo o pulsa para seleccionarlo',
@@ -25,31 +26,43 @@
       readError: 'No se pudo leer el PDF. Puede estar dañado, protegido o no ser compatible.',
       loaded: 'PDF cargado correctamente.',
       pages: 'páginas',
+      page: 'Página',
       pageCountLabel: 'Páginas detectadas',
       selectedFile: 'Archivo seleccionado',
-      rangeLabel: 'Páginas o rangos a extraer',
+      selectorTitle: 'Selecciona las páginas',
+      selectorHelp: 'Pulsa sobre cada página para incluirla o quitarla de la exportación. El orden será siempre el orden original del PDF.',
+      selectedSummary: 'páginas seleccionadas',
+      selectAll: 'Seleccionar todas',
+      selectNone: 'Quitar selección',
+      invertSelection: 'Invertir selección',
+      rangeLabel: 'Atajo por rangos opcional',
       rangePlaceholder: 'Ejemplo: 1-3,5,8-10',
-      rangeHelp: 'Usa números separados por comas. Los rangos deben ir de menor a mayor y no pueden repetirse.',
+      rangeHelp: 'También puedes escribir rangos para marcar páginas automáticamente.',
       previewTitle: 'Páginas que se exportarán',
-      noPreview: 'Escribe un rango válido para ver la selección.',
-      split: 'Crear PDF dividido',
+      noPreview: 'Selecciona una o varias páginas para activar la descarga.',
+      splitSingle: 'Descargar como un único PDF',
+      splitSeparate: 'Separar en PDFs individuales',
       splitting: 'Creando PDF…',
+      splittingZip: 'Creando ZIP…',
       clear: 'Limpiar',
       ready: 'PDF creado correctamente. La descarga debería comenzar automáticamente.',
+      zipReady: 'ZIP creado correctamente con los PDF separados. La descarga debería comenzar automáticamente.',
       needFile: 'Primero carga un PDF.',
-      needRange: 'Introduce al menos una página o rango.',
+      needRange: 'Selecciona al menos una página.',
       badFormat: 'Formato no válido. Usa páginas o rangos como 1-3,5,8-10.',
       invalidNumber: 'Los rangos solo pueden contener números de página mayores que cero.',
       reversedRange: 'El rango {range} no es válido: el inicio debe ser menor o igual que el final.',
       outOfBounds: 'La página {page} está fuera de límite. Este PDF tiene {total} páginas.',
       duplicated: 'La página {page} está repetida. Elimina duplicados para evitar resultados ambiguos.',
       createError: 'No se pudo crear el PDF. Revisa que el archivo no esté protegido o dañado.',
+      zipError: 'No se pudieron crear los PDF separados. Revisa que el archivo no esté protegido o dañado.',
       downloadName: 'pdfworld-dividido.pdf',
+      zipDownloadName: 'pdfworld-paginas-separadas.zip',
     },
     en: {
       eyebrow: 'Local processing',
       title: 'Split your PDF by pages',
-      description: 'Load a single PDF, enter the pages or ranges you want to extract and download a new document. The file is never uploaded to a server.',
+      description: 'Load a single PDF, visually select the pages you want to extract and download one document or a ZIP with separate PDFs. The file is never uploaded to a server.',
       dropTitle: 'Drag your PDF here',
       dropActive: 'Drop the PDF to load it',
       dropText: 'Drop the file or click to select it',
@@ -58,26 +71,38 @@
       readError: 'The PDF could not be read. It may be damaged, protected or unsupported.',
       loaded: 'PDF loaded successfully.',
       pages: 'pages',
+      page: 'Page',
       pageCountLabel: 'Detected pages',
       selectedFile: 'Selected file',
-      rangeLabel: 'Pages or ranges to extract',
+      selectorTitle: 'Select pages',
+      selectorHelp: 'Click each page to include it or remove it from the export. The output keeps the original PDF order.',
+      selectedSummary: 'selected pages',
+      selectAll: 'Select all',
+      selectNone: 'Clear selection',
+      invertSelection: 'Invert selection',
+      rangeLabel: 'Optional range shortcut',
       rangePlaceholder: 'Example: 1-3,5,8-10',
-      rangeHelp: 'Use numbers separated by commas. Ranges must go from lower to higher and cannot be repeated.',
+      rangeHelp: 'You can also type ranges to mark pages automatically.',
       previewTitle: 'Pages to export',
-      noPreview: 'Enter a valid range to preview the selection.',
-      split: 'Create split PDF',
+      noPreview: 'Select one or more pages to enable downloads.',
+      splitSingle: 'Download as one PDF',
+      splitSeparate: 'Split into separate PDFs',
       splitting: 'Creating PDF…',
+      splittingZip: 'Creating ZIP…',
       clear: 'Clear',
       ready: 'PDF created successfully. The download should start automatically.',
+      zipReady: 'ZIP created successfully with the separate PDFs. The download should start automatically.',
       needFile: 'Load a PDF first.',
-      needRange: 'Enter at least one page or range.',
+      needRange: 'Select at least one page.',
       badFormat: 'Invalid format. Use pages or ranges such as 1-3,5,8-10.',
       invalidNumber: 'Ranges can only contain page numbers greater than zero.',
       reversedRange: 'Range {range} is invalid: the start must be less than or equal to the end.',
       outOfBounds: 'Page {page} is out of bounds. This PDF has {total} pages.',
       duplicated: 'Page {page} is duplicated. Remove duplicates to avoid ambiguous output.',
       createError: 'The PDF could not be created. Check that the file is not protected or damaged.',
+      zipError: 'The separate PDFs could not be created. Check that the file is not protected or damaged.',
       downloadName: 'pdfworld-split.pdf',
+      zipDownloadName: 'pdfworld-separated-pages.zip',
     },
   } as const;
 
@@ -85,16 +110,19 @@
   let sourceBytes: Uint8Array | null = null;
   let pageCount = 0;
   let rangeInput = '';
-  let parsedPages: number[] = [];
+  let selectedPages: number[] = [];
   let parsedRanges: ParsedRange[] = [];
   let isLoading = false;
   let isSplitting = false;
+  let isCreatingZip = false;
   let errorMessage = '';
   let statusMessage = '';
 
   $: t = labels[lang] ?? labels.es;
-  $: selectedCount = parsedPages.length;
-  $: canSplit = Boolean(file && sourceBytes && pageCount > 0 && selectedCount > 0 && !errorMessage && !isLoading && !isSplitting);
+  $: pageNumbers = Array.from({ length: pageCount }, (_, index) => index + 1);
+  $: selectedCount = selectedPages.length;
+  $: canExport = Boolean(file && sourceBytes && pageCount > 0 && selectedCount > 0 && !errorMessage && !isLoading && !isSplitting && !isCreatingZip);
+  $: selectionLabel = selectedPages.length > 0 ? selectedPages.join(', ') : '';
 
   async function handleDropzoneFiles(files: File[]) {
     await loadFile(files[0] ?? null);
@@ -110,7 +138,7 @@
     sourceBytes = null;
     pageCount = 0;
     rangeInput = '';
-    parsedPages = [];
+    selectedPages = [];
     parsedRanges = [];
     errorMessage = '';
     statusMessage = '';
@@ -126,6 +154,8 @@
 
       sourceBytes = bytes;
       pageCount = pdf.getPageCount();
+      selectedPages = Array.from({ length: pageCount }, (_, index) => index + 1);
+      parsedRanges = [{ label: `1-${pageCount}`, pages: selectedPages }];
       statusMessage = `${t.loaded} ${pageCount} ${t.pages}.`;
     } catch {
       file = null;
@@ -137,6 +167,48 @@
     }
   }
 
+  function togglePage(page: number) {
+    clearMessagesForSelection();
+
+    if (selectedPages.includes(page)) {
+      selectedPages = selectedPages.filter((selectedPage) => selectedPage !== page);
+    } else {
+      selectedPages = [...selectedPages, page].sort((a, b) => a - b);
+    }
+
+    syncRangesFromSelection();
+  }
+
+  function selectAllPages() {
+    clearMessagesForSelection();
+    selectedPages = [...pageNumbers];
+    syncRangesFromSelection();
+  }
+
+  function clearSelection() {
+    clearMessagesForSelection();
+    selectedPages = [];
+    parsedRanges = [];
+    rangeInput = '';
+  }
+
+  function invertSelection() {
+    clearMessagesForSelection();
+    const selectedSet = new Set(selectedPages);
+    selectedPages = pageNumbers.filter((page) => !selectedSet.has(page));
+    syncRangesFromSelection();
+  }
+
+  function clearMessagesForSelection() {
+    errorMessage = '';
+    statusMessage = file && pageCount > 0 ? `${t.pageCountLabel}: ${pageCount}.` : '';
+  }
+
+  function syncRangesFromSelection() {
+    parsedRanges = pagesToRanges(selectedPages);
+    rangeInput = parsedRanges.map((range) => range.label).join(',');
+  }
+
   function handleRangeInput(event: Event) {
     rangeInput = (event.currentTarget as HTMLInputElement).value;
     validateCurrentRange();
@@ -146,7 +218,7 @@
     statusMessage = file && pageCount > 0 ? `${t.pageCountLabel}: ${pageCount}.` : '';
 
     const result = parseRanges(rangeInput, pageCount);
-    parsedPages = result.pages;
+    selectedPages = result.pages;
     parsedRanges = result.ranges;
     errorMessage = result.error;
   }
@@ -214,42 +286,46 @@
     return { pages, ranges, error: '' };
   }
 
+  function pagesToRanges(pages: number[]): ParsedRange[] {
+    if (pages.length === 0) return [];
+
+    const sortedPages = [...pages].sort((a, b) => a - b);
+    const ranges: ParsedRange[] = [];
+    let start = sortedPages[0];
+    let previous = sortedPages[0];
+
+    for (const page of sortedPages.slice(1)) {
+      if (page === previous + 1) {
+        previous = page;
+        continue;
+      }
+
+      ranges.push(createRange(start, previous));
+      start = page;
+      previous = page;
+    }
+
+    ranges.push(createRange(start, previous));
+    return ranges;
+  }
+
+  function createRange(start: number, end: number): ParsedRange {
+    return {
+      label: start === end ? String(start) : `${start}-${end}`,
+      pages: Array.from({ length: end - start + 1 }, (_, index) => start + index),
+    };
+  }
+
   async function splitPdf() {
-    if (!file || !sourceBytes) {
-      errorMessage = t.needFile;
-      return;
-    }
-
-    const result = parseRanges(rangeInput, pageCount);
-    parsedPages = result.pages;
-    parsedRanges = result.ranges;
-    errorMessage = result.error;
-
-    if (result.error) return;
-
-    if (result.pages.length === 0) {
-      errorMessage = t.needRange;
-      return;
-    }
+    const pages = getPagesForExport();
+    if (!pages) return;
 
     isSplitting = true;
     statusMessage = '';
 
     try {
-      const sourcePdf = await PDFDocument.load(sourceBytes.slice(), { ignoreEncryption: false });
-      const outputPdf = await PDFDocument.create();
-      const copiedPages = await outputPdf.copyPages(
-        sourcePdf,
-        result.pages.map((page) => page - 1),
-      );
-
-      copiedPages.forEach((page) => outputPdf.addPage(page));
-      outputPdf.setTitle(file ? `Dividido - ${file.name}` : 'PDF dividido');
-      outputPdf.setProducer('PDFWorld');
-      outputPdf.setCreator('PDFWorld');
-
-      const pdfBytes = await outputPdf.save();
-      saveAs(new Blob([pdfBytes], { type: 'application/pdf' }), getOutputFilename());
+      const pdfBytes = await createPdfWithPages(pages);
+      saveAs(new Blob([pdfBytes], { type: 'application/pdf' }), getSingleOutputFilename(pages));
       statusMessage = t.ready;
     } catch {
       errorMessage = t.createError;
@@ -258,29 +334,104 @@
     }
   }
 
+  async function splitIntoSeparatePdfs() {
+    const pages = getPagesForExport();
+    if (!pages) return;
+
+    isCreatingZip = true;
+    statusMessage = '';
+
+    try {
+      const zip = new JSZip();
+      const baseName = getBaseFilename();
+
+      for (const page of pages) {
+        const pdfBytes = await createPdfWithPages([page]);
+        zip.file(`${baseName}-pagina-${String(page).padStart(3, '0')}.pdf`, pdfBytes);
+        await yieldToBrowser();
+      }
+
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      saveAs(zipBlob, getZipOutputFilename());
+      statusMessage = t.zipReady;
+    } catch {
+      errorMessage = t.zipError;
+    } finally {
+      isCreatingZip = false;
+    }
+  }
+
+  function getPagesForExport() {
+    if (!file || !sourceBytes) {
+      errorMessage = t.needFile;
+      return null;
+    }
+
+    if (selectedPages.length === 0) {
+      errorMessage = t.needRange;
+      return null;
+    }
+
+    errorMessage = '';
+    return [...selectedPages].sort((a, b) => a - b);
+  }
+
+  async function createPdfWithPages(pages: number[]) {
+    if (!sourceBytes || !file) throw new Error(t.needFile);
+
+    const sourcePdf = await PDFDocument.load(sourceBytes.slice(), { ignoreEncryption: false });
+    const outputPdf = await PDFDocument.create();
+    const copiedPages = await outputPdf.copyPages(
+      sourcePdf,
+      pages.map((page) => page - 1),
+    );
+
+    copiedPages.forEach((page) => outputPdf.addPage(page));
+    outputPdf.setTitle(`${file.name} - ${pages.length === 1 ? `${t.page} ${pages[0]}` : selectionLabel}`);
+    outputPdf.setProducer('PDFWorld');
+    outputPdf.setCreator('PDFWorld');
+
+    return outputPdf.save();
+  }
+
   function clearTool() {
     file = null;
     sourceBytes = null;
     pageCount = 0;
     rangeInput = '';
-    parsedPages = [];
+    selectedPages = [];
     parsedRanges = [];
     isLoading = false;
     isSplitting = false;
+    isCreatingZip = false;
     errorMessage = '';
     statusMessage = '';
   }
 
-  function getOutputFilename() {
-    if (!file?.name) return t.downloadName;
+  function getBaseFilename() {
+    if (!file?.name) return 'pdfworld';
+    return file.name.replace(/\.pdf$/i, '').trim() || 'documento';
+  }
 
-    const baseName = file.name.replace(/\.pdf$/i, '').trim();
-    return `${baseName || 'documento'}-paginas-${parsedPages.join('_')}.pdf`;
+  function getSingleOutputFilename(pages: number[]) {
+    if (!file?.name) return t.downloadName;
+    return `${getBaseFilename()}-paginas-${pages.join('_')}.pdf`;
+  }
+
+  function getZipOutputFilename() {
+    if (!file?.name) return t.zipDownloadName;
+    return `${getBaseFilename()}-paginas-separadas.zip`;
   }
 
   function formatSize(bytes: number) {
     if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
     return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  }
+
+  function yieldToBrowser() {
+    return new Promise<void>((resolve) => {
+      window.requestIdleCallback?.(() => resolve(), { timeout: 120 }) ?? window.setTimeout(resolve, 0);
+    });
   }
 </script>
 
@@ -328,6 +479,37 @@
         </div>
       </section>
 
+      <section class="split-tool__selector-card" aria-labelledby="split-selector-title">
+        <div class="split-tool__selector-header">
+          <div>
+            <h3 id="split-selector-title">{t.selectorTitle}</h3>
+            <p>{t.selectorHelp}</p>
+          </div>
+          <strong aria-live="polite">{selectedCount} {t.selectedSummary}</strong>
+        </div>
+
+        <div class="split-tool__quick-actions" aria-label={t.selectorTitle}>
+          <button type="button" on:click={selectAllPages}>{t.selectAll}</button>
+          <button type="button" on:click={clearSelection}>{t.selectNone}</button>
+          <button type="button" on:click={invertSelection}>{t.invertSelection}</button>
+        </div>
+
+        <div class="split-tool__page-grid" aria-label={t.selectorTitle}>
+          {#each pageNumbers as page}
+            <button
+              type="button"
+              class:split-tool__page-button={true}
+              class:split-tool__page-button--selected={selectedPages.includes(page)}
+              aria-pressed={selectedPages.includes(page)}
+              on:click={() => togglePage(page)}
+            >
+              <span>{t.page}</span>
+              <strong>{page}</strong>
+            </button>
+          {/each}
+        </div>
+      </section>
+
       <section class="split-tool__form-card" aria-labelledby="split-range-title">
         <div class="split-tool__field">
           <label id="split-range-title" for="split-range-input">{t.rangeLabel}</label>
@@ -362,8 +544,11 @@
 
         <div class="split-tool__actions">
           <button type="button" class="split-tool__secondary" on:click={clearTool}>{t.clear}</button>
-          <button type="button" class="split-tool__primary" disabled={!canSplit} on:click={splitPdf}>
-            {isSplitting ? t.splitting : t.split}
+          <button type="button" class="split-tool__primary" disabled={!canExport} on:click={splitPdf}>
+            {isSplitting ? t.splitting : t.splitSingle}
+          </button>
+          <button type="button" class="split-tool__primary split-tool__primary--dark" disabled={!canExport} on:click={splitIntoSeparatePdfs}>
+            {isCreatingZip ? t.splittingZip : t.splitSeparate}
           </button>
         </div>
       </section>
@@ -381,6 +566,7 @@
   .split-tool__upload-panel,
   .split-tool__workspace,
   .split-tool__file-card,
+  .split-tool__selector-card,
   .split-tool__form-card,
   .split-tool__alert {
     border: 1px solid #e2e8f0;
@@ -427,7 +613,8 @@
   .split-tool__intro p,
   .split-tool__file-card p,
   .split-tool__field p,
-  .split-tool__preview p {
+  .split-tool__preview p,
+  .split-tool__selector-header p {
     margin: 0;
     color: #64748b;
   }
@@ -463,14 +650,20 @@
 
   .split-tool__workspace {
     display: grid;
-    grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.2fr);
+    grid-template-columns: minmax(220px, 0.72fr) minmax(0, 1.28fr);
     gap: 18px;
     padding: 18px;
   }
 
   .split-tool__file-card,
+  .split-tool__selector-card,
   .split-tool__form-card {
     padding: 18px;
+  }
+
+  .split-tool__selector-card,
+  .split-tool__form-card {
+    grid-column: 1 / -1;
   }
 
   .split-tool__file-card {
@@ -480,7 +673,8 @@
   }
 
   .split-tool__file-card h3,
-  .split-tool__preview h3 {
+  .split-tool__preview h3,
+  .split-tool__selector-card h3 {
     margin: 0 0 8px;
   }
 
@@ -505,9 +699,98 @@
     box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.14);
   }
 
+  .split-tool__selector-card,
   .split-tool__form-card {
     display: grid;
     gap: 18px;
+  }
+
+  .split-tool__selector-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .split-tool__selector-header strong {
+    flex: 0 0 auto;
+    padding: 8px 11px;
+    border-radius: 999px;
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 0.88rem;
+  }
+
+  .split-tool__quick-actions,
+  .split-tool__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .split-tool__quick-actions button,
+  .split-tool__primary,
+  .split-tool__secondary,
+  .split-tool__page-button {
+    border: 0;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 950;
+    transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease, border-color 140ms ease;
+  }
+
+  .split-tool__quick-actions button {
+    min-height: 40px;
+    padding: 9px 13px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: #334155;
+  }
+
+  .split-tool__page-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+    gap: 10px;
+    max-height: 420px;
+    overflow: auto;
+    padding: 4px;
+  }
+
+  .split-tool__page-button {
+    display: grid;
+    min-height: 86px;
+    place-items: center;
+    gap: 4px;
+    padding: 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 18px;
+    background: #fff;
+    color: #0f172a;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+  }
+
+  .split-tool__page-button span {
+    color: #64748b;
+    font-size: 0.76rem;
+    text-transform: uppercase;
+  }
+
+  .split-tool__page-button strong {
+    font-size: 1.35rem;
+  }
+
+  .split-tool__page-button--selected {
+    border-color: #ef4444;
+    background: #fff1f2;
+    color: #991b1b;
+    box-shadow: 0 16px 34px rgba(239, 68, 68, 0.16);
+  }
+
+  .split-tool__page-button:hover,
+  .split-tool__quick-actions button:hover:not(:disabled),
+  .split-tool__primary:hover:not(:disabled),
+  .split-tool__secondary:hover:not(:disabled) {
+    transform: translateY(-1px);
   }
 
   .split-tool__field {
@@ -569,22 +852,14 @@
   }
 
   .split-tool__actions {
-    display: flex;
-    flex-wrap: wrap;
     justify-content: flex-end;
-    gap: 10px;
   }
 
   .split-tool__primary,
   .split-tool__secondary {
-    border: 0;
-    border-radius: 999px;
-    cursor: pointer;
-    font: inherit;
-    font-weight: 950;
     min-height: 46px;
     padding: 12px 16px;
-    transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    border-radius: 999px;
   }
 
   .split-tool__primary {
@@ -593,14 +868,14 @@
     box-shadow: 0 16px 34px rgba(239, 68, 68, 0.24);
   }
 
+  .split-tool__primary--dark {
+    background: linear-gradient(135deg, #0f172a, #334155);
+    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.22);
+  }
+
   .split-tool__secondary {
     background: #e2e8f0;
     color: #334155;
-  }
-
-  .split-tool__primary:hover:not(:disabled),
-  .split-tool__secondary:hover:not(:disabled) {
-    transform: translateY(-1px);
   }
 
   .split-tool__primary:disabled,
@@ -620,8 +895,10 @@
     }
 
     .split-tool__field input,
+    .split-tool__quick-actions button,
     .split-tool__primary,
-    .split-tool__secondary {
+    .split-tool__secondary,
+    .split-tool__page-button {
       transition: none;
     }
   }
@@ -635,6 +912,15 @@
     .split-tool__upload-panel {
       padding: 18px;
       border-radius: 24px;
+    }
+
+    .split-tool__selector-header {
+      flex-direction: column;
+    }
+
+    .split-tool__page-grid {
+      grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+      max-height: 360px;
     }
 
     .split-tool__actions {
