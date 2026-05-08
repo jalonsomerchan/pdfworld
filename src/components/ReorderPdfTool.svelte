@@ -15,7 +15,6 @@
     pageNumber: number;
     thumbnailUrl: string;
     thumbnailStatus: 'pending' | 'ready' | 'failed';
-    selected: boolean;
   };
 
   GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
@@ -34,9 +33,7 @@
   let renderToken = 0;
   let fileInput: HTMLInputElement;
 
-  $: activePages = pages.filter((page) => !page.selected);
-  $: selectedPages = pages.filter((page) => page.selected);
-  $: canExport = Boolean(sourceBytes && activePages.length > 0 && !isLoading && !isExporting);
+  $: canExport = Boolean(sourceBytes && pages.length > 0 && !isLoading && !isExporting);
 
   async function handleFileChange(event: Event) {
     const input = event.currentTarget as HTMLInputElement;
@@ -85,7 +82,6 @@
         pageNumber: index + 1,
         thumbnailUrl: '',
         thumbnailStatus: 'pending',
-        selected: false,
       }));
       selectedPageId = pages[0]?.id ?? '';
       successMessage = `${pdfDocument.numPages} páginas cargadas. Arrastra las tarjetas para ordenarlas.`;
@@ -246,9 +242,7 @@
   }
 
   function restoreOriginalOrder() {
-    pages = [...pages, ...deletedPages]
-      .map((page) => ({ ...page, selected: false }))
-      .sort((a, b) => a.originalIndex - b.originalIndex);
+    pages = [...pages, ...deletedPages].sort((a, b) => a.originalIndex - b.originalIndex);
     deletedPages = [];
     selectedPageId = pages[0]?.id ?? '';
     errorMessage = '';
@@ -256,7 +250,7 @@
   }
 
   async function exportPdf() {
-    if (!sourceBytes || activePages.length === 0) return;
+    if (!sourceBytes || pages.length === 0) return;
 
     isExporting = true;
     errorMessage = '';
@@ -267,7 +261,7 @@
       const outputDocument = await PDFDocument.create();
       const copiedPages = await outputDocument.copyPages(
         sourceDocument,
-        activePages.map((page) => page.originalIndex),
+        pages.map((page) => page.originalIndex),
       );
 
       copiedPages.forEach((page) => outputDocument.addPage(page));
