@@ -2,6 +2,7 @@
 import '../styles/design-system.css';
 import { getAlternateLinks, getLocalizedPath, type Lang } from '../i18n/utils';
 import { languages } from '../i18n/ui';
+import { pdfToolCategories, pdfTools } from '../data/tools';
 
 interface Props {
   lang: Lang;
@@ -20,6 +21,26 @@ const structuredData = {
   url: new URL(getLocalizedPath(lang), Astro.site).toString(),
   inLanguage: lang,
   description,
+};
+const navTools = pdfTools.filter((tool) => ['merge-pdf', 'split-pdf', 'compress-pdf'].includes(tool.id));
+const convertTools = pdfTools.filter((tool) => tool.category === 'convertir').slice(0, 4);
+const navLabels = {
+  es: {
+    allTools: 'Todas las herramientas PDF',
+    convert: 'Convertir PDF',
+    login: 'Acceder',
+    register: 'Registro',
+    toolsMenu: 'Menú de herramientas',
+    categories: 'Categorías',
+  },
+  en: {
+    allTools: 'All PDF tools',
+    convert: 'Convert PDF',
+    login: 'Sign in',
+    register: 'Register',
+    toolsMenu: 'Tools menu',
+    categories: 'Categories',
+  },
 };
 ---
 
@@ -56,20 +77,60 @@ const structuredData = {
   <body>
     <header class="site-header">
       <a class="brand" href={getLocalizedPath(lang)} aria-label="PDFWorld home">
+        <span class="brand__mark" aria-hidden="true">PDF</span>
         <strong>PDFWorld</strong>
       </a>
-      <nav class="site-nav" aria-label="Language selector">
-        {alternateLinks.map((alternate) => (
-          <a
-            href={alternate.path}
-            class:list={[{ active: alternate.lang === lang }]}
-            lang={alternate.lang}
-            aria-current={alternate.lang === lang ? 'page' : undefined}
-          >
-            {languages[alternate.lang]}
-          </a>
+
+      <nav class="primary-nav" aria-label="PDF tools navigation">
+        {navTools.map((tool) => (
+          <a href={getLocalizedPath(lang, tool.route)}>{tool.title[lang]}</a>
         ))}
+
+        <details class="nav-dropdown">
+          <summary>{navLabels[lang].convert}</summary>
+          <div class="nav-dropdown__panel">
+            {convertTools.map((tool) => (
+              <a href={getLocalizedPath(lang, tool.route)}>
+                <span aria-hidden="true">{tool.icon}</span>
+                {tool.title[lang]}
+              </a>
+            ))}
+          </div>
+        </details>
+
+        <details class="nav-dropdown nav-dropdown--wide">
+          <summary>{navLabels[lang].allTools}</summary>
+          <div class="nav-dropdown__panel nav-dropdown__panel--grid">
+            <strong>{navLabels[lang].categories}</strong>
+            {pdfToolCategories.map((category) => (
+              <a href={getLocalizedPath(lang, `categoria/${category.id}`)}>
+                <span aria-hidden="true">{category.icon}</span>
+                {category.title[lang]}
+              </a>
+            ))}
+          </div>
+        </details>
       </nav>
+
+      <div class="site-actions">
+        <nav class="language-nav" aria-label="Language selector">
+          {alternateLinks.map((alternate) => (
+            <a
+              href={alternate.path}
+              class:list={[{ active: alternate.lang === lang }]}
+              lang={alternate.lang}
+              aria-current={alternate.lang === lang ? 'page' : undefined}
+            >
+              {languages[alternate.lang]}
+            </a>
+          ))}
+        </nav>
+        <a class="site-login" href={getLocalizedPath(lang)}>{navLabels[lang].login}</a>
+        <a class="site-register" href={getLocalizedPath(lang)}>{navLabels[lang].register}</a>
+        <button class="tools-launcher" type="button" aria-label={navLabels[lang].toolsMenu}>
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+        </button>
+      </div>
     </header>
 
     <main>
