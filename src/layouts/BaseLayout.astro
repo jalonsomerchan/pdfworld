@@ -1,5 +1,6 @@
 ---
 import '../styles/design-system.css';
+import '../styles/design-system-overrides.css';
 import { getAlternateLinks, getLocalizedPath, type Lang } from '../i18n/utils';
 import { languages } from '../i18n/ui';
 import { pdfToolCategories, pdfTools } from '../data/tools';
@@ -33,6 +34,13 @@ const navLabels = {
     toolsMenu: 'Menú de herramientas',
     categories: 'Categorías',
     privacy: 'Privacidad',
+    home: 'Inicio de FácilPDF',
+    navigation: 'Navegación principal',
+    language: 'Selector de idioma',
+    skip: 'Saltar al contenido',
+    theme: 'Cambiar entre modo claro y oscuro',
+    light: 'Modo claro',
+    dark: 'Modo oscuro',
   },
   en: {
     allTools: 'All PDF tools',
@@ -42,16 +50,25 @@ const navLabels = {
     toolsMenu: 'Tools menu',
     categories: 'Categories',
     privacy: 'Privacy',
+    home: 'FácilPDF home',
+    navigation: 'Primary navigation',
+    language: 'Language selector',
+    skip: 'Skip to content',
+    theme: 'Switch between light and dark mode',
+    light: 'Light mode',
+    dark: 'Dark mode',
   },
 };
 ---
 
 <!doctype html>
-<html lang={lang}>
+<html lang={lang} data-theme="light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
+    <meta name="robots" content="index,follow" />
+    <meta name="theme-color" content="#f8fafc" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalUrl} />
@@ -74,16 +91,35 @@ const navLabels = {
     <meta name="twitter:description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
+    <script is:inline>
+      (() => {
+        const STORAGE_KEY = 'theme';
+        const applyTheme = (theme) => {
+          document.documentElement.dataset.theme = theme;
+          document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#020617' : '#f8fafc');
+        };
+
+        try {
+          const storedTheme = localStorage.getItem(STORAGE_KEY);
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          applyTheme(storedTheme || (prefersDark ? 'dark' : 'light'));
+        } catch {
+          applyTheme('light');
+        }
+      })();
+    </script>
     <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
   </head>
   <body>
+    <a class="skip-link" href="#main">{navLabels[lang].skip}</a>
+
     <header class="site-header">
-      <a class="brand" href={getLocalizedPath(lang)} aria-label="FácilPDF home">
+      <a class="brand" href={getLocalizedPath(lang)} aria-label={navLabels[lang].home}>
         <span class="brand__mark" aria-hidden="true">PDF</span>
         <strong>FácilPDF</strong>
       </a>
 
-      <nav class="primary-nav" aria-label="PDF tools navigation">
+      <nav class="primary-nav" aria-label={navLabels[lang].navigation}>
         {navTools.map((tool) => (
           <a href={getLocalizedPath(lang, tool.route)}>{tool.title[lang]}</a>
         ))}
@@ -115,7 +151,12 @@ const navLabels = {
       </nav>
 
       <div class="site-actions">
-        <nav class="language-nav" aria-label="Language selector">
+        <button class="theme-toggle" type="button" aria-label={navLabels[lang].theme} data-theme-toggle>
+          <span class="theme-toggle__icon" aria-hidden="true" data-theme-toggle-icon>☀️</span>
+          <span class="theme-toggle__text" data-theme-toggle-text>{navLabels[lang].light}</span>
+        </button>
+
+        <nav class="language-nav" aria-label={navLabels[lang].language}>
           {alternateLinks.map((alternate) => (
             <a
               href={alternate.path}
@@ -130,7 +171,7 @@ const navLabels = {
       </div>
     </header>
 
-    <main>
+    <main id="main" tabindex="-1">
       <slot />
     </main>
 
@@ -140,5 +181,33 @@ const navLabels = {
         <a href={getLocalizedPath(lang, 'privacidad')}>{navLabels[lang].privacy}</a>
       </div>
     </footer>
+
+    <script is:inline define:vars={{ lightLabel: navLabels[lang].light, darkLabel: navLabels[lang].dark }}>
+      (() => {
+        const STORAGE_KEY = 'theme';
+        const root = document.documentElement;
+        const button = document.querySelector('[data-theme-toggle]');
+        const icon = document.querySelector('[data-theme-toggle-icon]');
+        const text = document.querySelector('[data-theme-toggle-text]');
+        const themeColor = document.querySelector('meta[name="theme-color"]');
+
+        const sync = () => {
+          const isDark = root.dataset.theme === 'dark';
+          if (icon) icon.textContent = isDark ? '🌙' : '☀️';
+          if (text) text.textContent = isDark ? darkLabel : lightLabel;
+          button?.setAttribute('aria-pressed', String(isDark));
+          themeColor?.setAttribute('content', isDark ? '#020617' : '#f8fafc');
+        };
+
+        button?.addEventListener('click', () => {
+          const nextTheme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+          root.dataset.theme = nextTheme;
+          try { localStorage.setItem(STORAGE_KEY, nextTheme); } catch {}
+          sync();
+        });
+
+        sync();
+      })();
+    </script>
   </body>
 </html>
