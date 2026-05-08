@@ -47,3 +47,232 @@ const t = useTranslations(lang as Lang);
 
   <Fragment slot="footer">{t('footer.privacy')}</Fragment>
 </BaseLayout>
+
+<script>
+  function enhanceReorderPdfDropzone() {
+    const dropzones = document.querySelectorAll('.reorder-tool .file-drop');
+
+    dropzones.forEach((dropzone) => {
+      if (dropzone.dataset.dropzoneEnhanced === 'true') return;
+
+      const input = dropzone.querySelector('input[type="file"]');
+      const label = dropzone.querySelector('span');
+
+      if (!(input instanceof HTMLInputElement)) return;
+
+      dropzone.dataset.dropzoneEnhanced = 'true';
+      dropzone.setAttribute('role', 'button');
+      dropzone.setAttribute('tabindex', '0');
+      dropzone.setAttribute('aria-label', 'Arrastra un PDF o pulsa para seleccionarlo');
+
+      let dragDepth = 0;
+
+      const setDragging = (isDragging) => {
+        dropzone.classList.toggle('file-drop--active', isDragging);
+        if (label) {
+          label.textContent = isDragging ? 'Suelta el PDF aquí' : (input.files?.[0]?.name || 'Arrastra o selecciona un PDF');
+        }
+      };
+
+      dropzone.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        input.click();
+      });
+
+      dropzone.addEventListener('dragenter', (event) => {
+        event.preventDefault();
+        dragDepth += 1;
+        setDragging(true);
+      });
+
+      dropzone.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+        setDragging(true);
+      });
+
+      dropzone.addEventListener('dragleave', (event) => {
+        event.preventDefault();
+        dragDepth = Math.max(0, dragDepth - 1);
+        setDragging(dragDepth > 0);
+      });
+
+      dropzone.addEventListener('drop', (event) => {
+        event.preventDefault();
+        dragDepth = 0;
+        setDragging(false);
+
+        const files = event.dataTransfer?.files;
+        if (!files?.length) return;
+
+        const transfer = new DataTransfer();
+        const pdfFile = Array.from(files).find((file) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
+
+        if (!pdfFile) {
+          input.value = '';
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          return;
+        }
+
+        transfer.items.add(pdfFile);
+        input.files = transfer.files;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+
+      input.addEventListener('change', () => {
+        if (label && input.files?.[0]) label.textContent = input.files[0].name;
+      });
+    });
+  }
+
+  enhanceReorderPdfDropzone();
+  document.addEventListener('astro:page-load', enhanceReorderPdfDropzone);
+</script>
+
+<style is:global>
+  .reorder-tool .upload-panel {
+    position: relative;
+    overflow: hidden;
+    border-radius: 32px !important;
+    background:
+      radial-gradient(circle at top right, rgba(239, 68, 68, 0.14), transparent 36%),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.88)) !important;
+    box-shadow: 0 30px 90px rgba(15, 23, 42, 0.11) !important;
+  }
+
+  .reorder-tool .upload-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(120deg, transparent 20%, rgba(255, 255, 255, 0.62), transparent 80%);
+    transform: translateX(-110%);
+    animation: reorder-upload-sheen 7s ease-in-out infinite;
+  }
+
+  .reorder-tool .upload-panel > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .reorder-tool .file-drop {
+    position: relative;
+    isolation: isolate;
+    min-height: 210px;
+    place-items: center;
+    overflow: hidden;
+    border-color: rgba(148, 163, 184, 0.95) !important;
+    border-radius: 28px !important;
+    background:
+      linear-gradient(135deg, rgba(248, 250, 252, 0.94), rgba(255, 255, 255, 0.82)),
+      radial-gradient(circle at center, rgba(239, 68, 68, 0.09), transparent 45%) !important;
+    color: #0f172a !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.74);
+    transition:
+      transform 180ms ease,
+      border-color 180ms ease,
+      background 180ms ease,
+      box-shadow 180ms ease;
+  }
+
+  .reorder-tool .file-drop::before {
+    content: '+';
+    display: grid;
+    width: 72px;
+    height: 82px;
+    place-items: center;
+    margin-bottom: 8px;
+    border: 1px solid rgba(239, 68, 68, 0.18);
+    border-radius: 18px;
+    background: #fff;
+    color: #ef4444;
+    font-size: 2.2rem;
+    font-weight: 950;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.15);
+    transform: rotate(6deg);
+    animation: reorder-upload-float 3.4s ease-in-out infinite;
+  }
+
+  .reorder-tool .file-drop::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    opacity: 0.5;
+    background-image:
+      linear-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+    background-size: 28px 28px;
+    mask-image: radial-gradient(circle at center, black, transparent 72%);
+  }
+
+  .reorder-tool .file-drop:hover,
+  .reorder-tool .file-drop:focus-within,
+  .reorder-tool .file-drop--active {
+    border-color: #ef4444 !important;
+    background:
+      linear-gradient(135deg, rgba(255, 241, 242, 0.98), rgba(255, 255, 255, 0.92)),
+      radial-gradient(circle at center, rgba(239, 68, 68, 0.2), transparent 50%) !important;
+    box-shadow: 0 28px 80px rgba(239, 68, 68, 0.2);
+    outline: none;
+    transform: translateY(-2px);
+  }
+
+  .reorder-tool .file-drop--active {
+    transform: scale(1.01);
+  }
+
+  .reorder-tool .file-drop span {
+    overflow: hidden;
+    max-width: min(100%, 360px);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #0f172a;
+    font-size: clamp(1.05rem, 2vw, 1.35rem);
+    letter-spacing: -0.03em;
+  }
+
+  .reorder-tool .file-drop small {
+    max-width: 32ch;
+    color: #64748b !important;
+    line-height: 1.45;
+  }
+
+  .reorder-tool .alert,
+  .reorder-tool .loading-card,
+  .reorder-tool .help-card,
+  .reorder-tool .actions-bar,
+  .reorder-tool .preview-panel,
+  .reorder-tool .deleted-panel {
+    border-radius: 22px !important;
+  }
+
+  @keyframes reorder-upload-sheen {
+    0%, 55% { transform: translateX(-110%); }
+    100% { transform: translateX(110%); }
+  }
+
+  @keyframes reorder-upload-float {
+    0%, 100% { transform: translateY(0) rotate(6deg); }
+    50% { transform: translateY(-6px) rotate(3deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reorder-tool .upload-panel::before,
+    .reorder-tool .file-drop::before {
+      animation: none;
+    }
+
+    .reorder-tool .file-drop {
+      transition: none;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .reorder-tool .file-drop {
+      min-height: 220px;
+      border-radius: 22px !important;
+    }
+  }
+</style>
