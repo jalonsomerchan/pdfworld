@@ -1,0 +1,49 @@
+---
+import ScanPdfTool from '../../components/ScanPdfTool.svelte';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { isLang, useTranslations, type Lang } from '../../i18n/utils';
+import { locales } from '../../i18n/ui';
+
+export function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params;
+
+if (!isLang(lang)) {
+  return Astro.redirect('/es/escanear-pdf');
+}
+
+const t = useTranslations(lang as Lang);
+---
+
+<BaseLayout
+  lang={lang}
+  title={t('tool.scan.seo.title')}
+  description={t('tool.scan.seo.description')}
+  path="escanear-pdf"
+>
+  <section class="hero">
+    <span class="badge">{t('home.privacyBadge')}</span>
+    <h1>{t('tool.scan.h1')}</h1>
+    <p class="lead">{t('tool.scan.lead')}</p>
+  </section>
+
+  <ScanPdfTool client:load lang={lang} />
+
+  <section aria-labelledby="how-title">
+    <h2 id="how-title">{t('tool.scan.howTitle')}</h2>
+    <ol>
+      <li>{t('tool.scan.step1')}</li>
+      <li>{t('tool.scan.step2')}</li>
+      <li>{t('tool.scan.step3')}</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>{t('tool.scan.privacyTitle')}</h2>
+    <p>{t('tool.scan.privacyText')}</p>
+  </section>
+
+  <Fragment slot="footer">{t('footer.privacy')}</Fragment>
+</BaseLayout>
