@@ -1,6 +1,6 @@
-# PDFWorld visual system
+# FácilPDF visual system
 
-PDFWorld usa una identidad clara, directa y preparada para escalar a muchas herramientas PDF. La referencia funcional es la simplicidad de productos como iLovePDF, pero la marca evita el clon: coral/rojo más cálido, tarjetas con radios amplios, fondos documentales claros, microinteracciones suaves y un lenguaje de componentes propio.
+FácilPDF usa una identidad clara, directa y preparada para escalar a muchas herramientas PDF. La referencia funcional es la simplicidad de productos como iLovePDF, pero la marca evita el clon: coral/rojo más cálido, tarjetas con radios amplios, fondos documentales claros, microinteracciones suaves y un lenguaje de componentes propio.
 
 ## Principios
 

@@ -41,27 +41,12 @@ const privacyText = currentLang === 'es'
   description={t('seo.home.description')}
 >
   <section class="home-hero" aria-labelledby="home-title">
-    <span class="home-hero__eyebrow">{heroEyebrow}</span>
     <h1 id="home-title">{heroTitle}</h1>
     <p class="home-hero__lead">{heroLead}</p>
 
-    <div class="home-hero__stats" aria-label={currentLang === 'es' ? 'Resumen de herramientas' : 'Tools summary'}>
-      <span><strong>{totalTools}</strong> {toolsCountLabel}</span>
-      <span><strong>{availableTools}</strong> {toolStatusLabels.available[currentLang].toLowerCase()}</span>
-      <span>{privacyText}</span>
-    </div>
   </section>
 
   <section class="tools-catalog" aria-labelledby="tools-title">
-    <div class="tools-catalog__header">
-      <div>
-        <h2 id="tools-title">{t('home.toolsTitle')}</h2>
-        <p>{t('home.toolsIntro')}</p>
-      </div>
-      <output class="tools-count" data-tools-count aria-live="polite">
-        {totalTools} {toolsCountLabel}
-      </output>
-    </div>
 
     <div class="tool-filters" role="group" aria-label={filterLabel}>
       <button class="tool-filter is-active" type="button" data-tool-filter="all" aria-pressed="true">

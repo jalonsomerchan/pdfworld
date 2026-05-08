@@ -1,4 +1,4 @@
-const DB_NAME = 'pdfworld-transfers';
+const DB_NAME = 'FácilPDF-transfers';
 const STORE_NAME = 'pending-files';
 const DB_VERSION = 1;
 const PENDING_KEY = 'pending-pdf';
@@ -41,7 +41,7 @@ function withStore<T>(mode: IDBTransactionMode, action: (store: IDBObjectStore) 
   }));
 }
 
-export async function savePendingPdfTransfer(file: File, source = 'pdfworld'): Promise<void> {
+export async function savePendingPdfTransfer(file: File, source = 'FácilPDF'): Promise<void> {
   if (typeof indexedDB === 'undefined') return;
 
   await withStore('readwrite', (store) => store.put({ file, source, createdAt: Date.now() }, PENDING_KEY));

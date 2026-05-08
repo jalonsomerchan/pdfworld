@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { onDestroy } from 'svelte';
-  import { PDFDocument } from 'pdf-lib';
+  import { onDestroy, tick } from 'svelte';
+  import { PDFDocument, degrees } from 'pdf-lib';
   import {
     GlobalWorkerOptions,
     getDocument,
@@ -9,11 +9,14 @@
   } from 'pdfjs-dist';
   import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
   import PdfDropzone from './PdfDropzone.svelte';
+  import PdfResultModal from './PdfResultModal.svelte';
+  import { createPdfObjectUrl, getFriendlyPdfError, yieldToBrowser } from '../lib/pdfToolUtils';
 
   type PageItem = {
     id: string;
     originalIndex: number;
     pageNumber: number;
+    rotation: number;
     thumbnailUrl: string;
     thumbnailStatus: 'pending' | 'ready' | 'failed';
   };
@@ -33,14 +36,14 @@
   let pointerStartY = 0;
   let hasPointerMoved = false;
   let isLoading = false;
-  let isExporting = false;
   let isPreviewing = false;
   let errorMessage = '';
   let successMessage = '';
   let previewUrl = '';
   let renderToken = 0;
+  let workspaceRegion: HTMLDivElement;
 
-  $: canExport = Boolean(sourceBytes && pages.length > 0 && !isLoading && !isExporting && !isPreviewing);
+  $: canExport = Boolean(sourceBytes && pages.length > 0 && !isLoading && !isPreviewing);
   $: hasChanges = pages.some((page, index) => page.originalIndex !== index) || deletedPages.length > 0;
 
   async function handleDropzoneFiles(files: File[]) {
@@ -89,12 +92,14 @@
         id: `page-${crypto.randomUUID?.() ?? `${Date.now()}-${index}`}`,
         originalIndex: index,
         pageNumber: index + 1,
+        rotation: 0,
         thumbnailUrl: '',
         thumbnailStatus: 'pending',
       }));
       selectedPageId = pages[0]?.id ?? '';
       successMessage = `${pdfDocument.numPages} páginas cargadas. Arrastra las tarjetas para ordenar.`;
       void renderThumbnails();
+      await scrollToWorkspace();
     } catch (error) {
       handleLoadError(error);
     } finally {
@@ -286,6 +291,15 @@
     errorMessage = '';
   }
 
+  function rotatePage(pageId: string, delta: 90 | -90) {
+    pages = pages.map((page) =>
+      page.id === pageId ? { ...page, rotation: normalizeRotation(page.rotation + delta) } : page,
+    );
+    cleanupPreview();
+    successMessage = 'Giro actualizado. Genera la vista previa para revisar el PDF.';
+    errorMessage = '';
+  }
+
   function restoreDeletedPage(pageId: string) {
     const pageToRestore = deletedPages.find((page) => page.id === pageId);
     if (!pageToRestore) return;
@@ -316,30 +330,12 @@
     try {
       const pdfBytes = await createOrderedPdfBytes();
       cleanupPreview();
-      previewUrl = URL.createObjectURL(new Blob([pdfBytes], { type: 'application/pdf' }));
+      previewUrl = createPdfObjectUrl(pdfBytes);
       successMessage = 'Vista previa generada. Revísala antes de descargar.';
     } catch (error) {
-      errorMessage = getFriendlyError(error, 'No se pudo generar la vista previa del PDF.');
+      errorMessage = getFriendlyPdfError(error, 'No se pudo generar la vista previa del PDF.');
     } finally {
       isPreviewing = false;
-    }
-  }
-
-  async function downloadPdf() {
-    if (!canExport) return;
-
-    isExporting = true;
-    errorMessage = '';
-    successMessage = '';
-
-    try {
-      const pdfBytes = await createOrderedPdfBytes();
-      downloadBytes(pdfBytes, getOutputFilename());
-      successMessage = 'PDF ordenado descargado correctamente.';
-    } catch (error) {
-      errorMessage = getFriendlyError(error, 'No se pudo generar el PDF ordenado.');
-    } finally {
-      isExporting = false;
     }
   }
 
@@ -356,9 +352,14 @@
     );
 
     copiedPages.forEach((page) => outputDocument.addPage(page));
+    pages.forEach((pageItem, index) => {
+      if (!pageItem.rotation) return;
+      const outputPage = outputDocument.getPage(index);
+      outputPage.setRotation(degrees(normalizeRotation(outputPage.getRotation().angle + pageItem.rotation)));
+    });
     outputDocument.setTitle(file ? `Ordenado - ${file.name}` : 'PDF ordenado');
-    outputDocument.setProducer('PDFWorld');
-    outputDocument.setCreator('PDFWorld');
+    outputDocument.setProducer('FácilPDF');
+    outputDocument.setCreator('FácilPDF');
 
     return outputDocument.save();
   }
@@ -367,54 +368,30 @@
     void loadFile(null);
   }
 
-  function openPreviewInNewTab() {
-    if (!previewUrl) return;
-    window.open(previewUrl, '_blank', 'noopener,noreferrer');
-  }
-
   function getOutputFilename() {
-    const fallback = 'pdfworld-ordenado.pdf';
+    const fallback = 'pdf-ordenado.pdf';
     if (!file?.name) return fallback;
     const baseName = file.name.replace(/\.pdf$/i, '').trim();
     return `${baseName || 'documento'}-ordenado.pdf`;
   }
 
-  function downloadBytes(bytes: Uint8Array, filename: string) {
-    const blob = new Blob([bytes], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.rel = 'noopener';
-    document.body.append(link);
-    link.click();
-    link.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  function thumbStyle(rotation: number) {
+    const normalized = normalizeRotation(rotation);
+    const scale = normalized === 90 || normalized === 270 ? 0.72 : 1;
+    return `transform: rotate(${normalized}deg) scale(${scale});`;
+  }
+
+  function normalizeRotation(value: number) {
+    return ((value % 360) + 360) % 360;
   }
 
   function handleLoadError(error: unknown) {
-    errorMessage = getFriendlyError(error, 'No se pudo cargar el PDF. Revisa el archivo e inténtalo de nuevo.');
+    errorMessage = getFriendlyPdfError(error, 'No se pudo cargar el PDF. Revisa el archivo e inténtalo de nuevo.');
     successMessage = '';
     pages = [];
     deletedPages = [];
     sourceBytes = null;
     cleanupPreview();
-  }
-
-  function getFriendlyError(error: unknown, fallback: string) {
-    if (error instanceof Error) {
-      if (/password|encrypted/i.test(`${error.name} ${error.message}`)) {
-        return 'El PDF está protegido con contraseña o no permite esta operación en navegador.';
-      }
-
-      if (/invalid|corrupt|damaged/i.test(error.message)) {
-        return 'El PDF parece estar dañado o no tiene un formato válido.';
-      }
-
-      return error.message || fallback;
-    }
-
-    return fallback;
   }
 
   function cleanupPreview() {
@@ -444,10 +421,9 @@
     }
   }
 
-  function yieldToBrowser() {
-    return new Promise<void>((resolve) => {
-      window.requestIdleCallback?.(() => resolve(), { timeout: 120 }) ?? window.setTimeout(resolve, 0);
-    });
+  async function scrollToWorkspace() {
+    await tick();
+    workspaceRegion?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   onDestroy(() => {
@@ -490,7 +466,7 @@
   {/if}
 
   {#if pages.length > 0}
-    <div class="actions-bar">
+    <div class="actions-bar" bind:this={workspaceRegion}>
       <div class="actions-bar__summary">
         <strong>{pages.length}</strong> páginas activas
         {#if deletedPages.length > 0}
@@ -508,8 +484,8 @@
         <button type="button" class="secondary" on:click={previewPdf} disabled={!canExport}>
           {isPreviewing ? 'Generando vista…' : 'Ver PDF'}
         </button>
-        <button type="button" class="primary" on:click={downloadPdf} disabled={!canExport}>
-          {isExporting ? 'Descargando…' : 'Descargar directo'}
+        <button type="button" class="primary" on:click={previewPdf} disabled={!canExport}>
+          {isPreviewing ? 'Generando vista…' : 'Previsualizar y descargar'}
         </button>
       </div>
     </div>
@@ -550,7 +526,7 @@
 
           <div class="page-card__preview">
             {#if page.thumbnailStatus === 'ready' && page.thumbnailUrl}
-              <img src={page.thumbnailUrl} alt={`Miniatura de la página ${page.pageNumber}`} loading="lazy" />
+              <img src={page.thumbnailUrl} alt={`Miniatura de la página ${page.pageNumber}`} style={thumbStyle(page.rotation)} loading="lazy" />
             {:else if page.thumbnailStatus === 'pending'}
               <span>Miniatura…</span>
             {:else}
@@ -566,27 +542,13 @@
           <div class="page-card__controls" aria-label={`Acciones de página ${page.pageNumber}`}>
             <button type="button" on:click|stopPropagation={() => movePage(page.id, -1)} disabled={index === 0} aria-label="Mover antes">↑</button>
             <button type="button" on:click|stopPropagation={() => movePage(page.id, 1)} disabled={index === pages.length - 1} aria-label="Mover después">↓</button>
+            <button type="button" on:click|stopPropagation={() => rotatePage(page.id, -90)} aria-label="Girar izquierda">↶</button>
+            <button type="button" on:click|stopPropagation={() => rotatePage(page.id, 90)} aria-label="Girar derecha">↷</button>
             <button type="button" class="danger" on:click|stopPropagation={() => removePage(page.id)} aria-label="Eliminar página">Eliminar</button>
           </div>
         </article>
       {/each}
     </div>
-  {/if}
-
-  {#if previewUrl}
-    <section class="preview-panel" aria-labelledby="preview-title">
-      <div class="preview-panel__header">
-        <div>
-          <h3 id="preview-title">Vista previa del PDF ordenado</h3>
-          <p>Comprueba el resultado antes de descargarlo. Si cambias el orden, la vista previa se regenerará al pulsar “Ver PDF”.</p>
-        </div>
-        <div class="preview-panel__actions">
-          <button type="button" on:click={openPreviewInNewTab}>Abrir en pestaña</button>
-          <button type="button" class="primary" on:click={downloadPdf} disabled={!canExport}>Descargar este PDF</button>
-        </div>
-      </div>
-      <iframe title="Vista previa del PDF ordenado" src={previewUrl}></iframe>
-    </section>
   {/if}
 
   {#if deletedPages.length > 0}
@@ -605,6 +567,18 @@
   {#if file}
     <button type="button" class="reset-button" on:click={resetTool}>Empezar con otro PDF</button>
   {/if}
+
+  <PdfResultModal
+    open={Boolean(previewUrl)}
+    pdfUrl={previewUrl}
+    filename={getOutputFilename()}
+    title="Vista previa del PDF ordenado"
+    description="Comprueba el resultado y descárgalo desde este modal. Si cambias el orden, genera una nueva vista."
+    downloadLabel="Descargar PDF"
+    openLabel="Abrir en pestaña"
+    closeLabel="Cerrar"
+    on:close={cleanupPreview}
+  />
 </section>
 
 <style>

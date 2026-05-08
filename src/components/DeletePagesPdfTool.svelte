@@ -1,6 +1,8 @@
 <script lang="ts">
-  import { saveAs } from 'file-saver';
+  import { onDestroy, tick } from 'svelte';
   import PdfDropzone from './PdfDropzone.svelte';
+  import PdfResultModal from './PdfResultModal.svelte';
+  import { createPdfObjectUrl, formatFileSize, yieldToBrowser } from '../lib/pdfToolUtils';
   import { deletePagesFromPdfInBrowser, getPdfPageCount, type DeletePagesPdfResult } from '../lib/pdf/deletePagesPdf';
   import { pagesToRanges, parsePageRanges, type ParsedPageRange } from '../lib/pdf/pageRanges';
 
@@ -43,6 +45,8 @@
       deleting: 'Generando PDF…',
       deleteButton: 'Eliminar páginas y descargar',
       downloadAgain: 'Descargar otra vez',
+      open: 'Abrir en pestaña',
+      close: 'Cerrar',
       clear: 'Limpiar',
       originalSize: 'Tamaño original',
       outputSize: 'Tamaño final',
@@ -83,6 +87,8 @@
       deleting: 'Generating PDF…',
       deleteButton: 'Delete pages and download',
       downloadAgain: 'Download again',
+      open: 'Open in tab',
+      close: 'Close',
       clear: 'Clear',
       originalSize: 'Original size',
       outputSize: 'Final size',
@@ -101,6 +107,13 @@
   let isGenerating = false;
   let errorMessage = '';
   let statusMessage = '';
+  let resultUrl = '';
+  let workspaceRegion: HTMLDivElement;
+  let thumbUrls: Record<number, string> = {};
+  let thumbStatus: Record<number, 'pending' | 'ready' | 'failed'> = {};
+  let pdfJsPromise: Promise<any> | null = null;
+  let previewDoc: any = null;
+  let renderToken = 0;
 
   $: t = labels[lang] ?? labels.es;
   $: keptPages = pageCount > 0 ? Array.from({ length: pageCount }, (_, index) => index + 1).filter((page) => !pagesToDelete.includes(page)) : [];
@@ -119,10 +132,14 @@
   async function loadFile(nextFile: File | null) {
     file = nextFile;
     pageCount = 0;
+    renderToken += 1;
+    cleanupThumbnails();
+    void destroyPreviewDoc();
     rangeInput = '';
     pagesToDelete = [];
     deleteRanges = [];
     result = null;
+    cleanupResultUrl();
     errorMessage = '';
     statusMessage = '';
 
@@ -132,7 +149,10 @@
 
     try {
       pageCount = await getPdfPageCount(nextFile);
+      thumbStatus = Object.fromEntries(Array.from({ length: pageCount }, (_, index) => [index + 1, 'pending']));
       statusMessage = `${t.loaded} ${pageCount} ${t.pages}.`;
+      void renderThumbnails(nextFile);
+      await scrollToWorkspace();
     } catch {
       file = null;
       pageCount = 0;
@@ -145,6 +165,81 @@
   function handleRangeInput(event: Event) {
     rangeInput = (event.currentTarget as HTMLInputElement).value;
     result = null;
+    validateRanges();
+  }
+
+  async function loadPdfJs() {
+    if (!pdfJsPromise) {
+      pdfJsPromise = Promise.all([import('pdfjs-dist/legacy/build/pdf.mjs'), import('pdfjs-dist/legacy/build/pdf.worker.mjs?url')]).then(([pdfJs, worker]) => {
+        pdfJs.GlobalWorkerOptions.workerSrc = worker.default;
+        return pdfJs;
+      });
+    }
+
+    return pdfJsPromise;
+  }
+
+  async function renderThumbnails(sourceFile: File) {
+    const token = ++renderToken;
+
+    try {
+      const pdfJs = await loadPdfJs();
+      const bytes = new Uint8Array((await sourceFile.arrayBuffer()).slice(0));
+      previewDoc = await pdfJs.getDocument({ data: bytes, useWorkerFetch: false, isEvalSupported: false, disableAutoFetch: true, disableStream: true }).promise;
+
+      for (let page = 1; page <= previewDoc.numPages; page += 1) {
+        if (token !== renderToken || !previewDoc) return;
+        await yieldToBrowser();
+
+        try {
+          const pdfPage = await previewDoc.getPage(page);
+          const url = await renderThumb(pdfPage);
+          pdfPage.cleanup();
+
+          if (token !== renderToken) {
+            URL.revokeObjectURL(url);
+            return;
+          }
+
+          if (thumbUrls[page]) URL.revokeObjectURL(thumbUrls[page]);
+          thumbUrls = { ...thumbUrls, [page]: url };
+          thumbStatus = { ...thumbStatus, [page]: 'ready' };
+        } catch {
+          thumbStatus = { ...thumbStatus, [page]: 'failed' };
+        }
+      }
+    } catch {
+      thumbStatus = Object.fromEntries(Array.from({ length: pageCount }, (_, index) => [index + 1, 'failed']));
+    }
+  }
+
+  async function renderThumb(pdfPage: any) {
+    const viewport = pdfPage.getViewport({ scale: 0.24 });
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d', { alpha: false });
+    if (!context) throw new Error('No canvas context');
+
+    canvas.width = Math.max(1, Math.floor(viewport.width));
+    canvas.height = Math.max(1, Math.floor(viewport.height));
+    context.fillStyle = '#fff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    await pdfPage.render({ canvasContext: context, viewport }).promise;
+
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/webp', 0.76));
+    if (!blob) throw new Error('No thumbnail blob');
+    return URL.createObjectURL(blob);
+  }
+
+  function togglePageDelete(page: number) {
+    if (pagesToDelete.includes(page)) {
+      pagesToDelete = pagesToDelete.filter((item) => item !== page);
+    } else {
+      pagesToDelete = [...pagesToDelete, page].sort((a, b) => a - b);
+    }
+
+    rangeInput = pagesToRanges(pagesToDelete).map((range) => range.label).join(',');
+    result = null;
+    cleanupResultUrl();
     validateRanges();
   }
 
@@ -192,7 +287,7 @@
     try {
       const nextResult = await deletePagesFromPdfInBrowser({ file, pagesToDelete });
       result = nextResult;
-      saveBytes(nextResult.bytes);
+      resultUrl = createPdfObjectUrl(nextResult.bytes);
       statusMessage = t.ready;
     } catch {
       errorMessage = t.createError;
@@ -203,20 +298,21 @@
 
   function downloadAgain() {
     if (!result) return;
-    saveBytes(result.bytes);
-  }
-
-  function saveBytes(bytes: Uint8Array) {
-    saveAs(new Blob([new Uint8Array(bytes)], { type: 'application/pdf' }), outputName());
+    cleanupResultUrl();
+    resultUrl = createPdfObjectUrl(result.bytes);
   }
 
   function clearTool() {
     file = null;
     pageCount = 0;
+    renderToken += 1;
+    cleanupThumbnails();
+    void destroyPreviewDoc();
     rangeInput = '';
     pagesToDelete = [];
     deleteRanges = [];
     result = null;
+    cleanupResultUrl();
     isLoading = false;
     isGenerating = false;
     errorMessage = '';
@@ -230,9 +326,43 @@
 
   function formatSize(bytes: number) {
     if (!Number.isFinite(bytes) || bytes <= 0) return '0 KB';
-    if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
-    return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+    return formatFileSize(bytes);
   }
+
+  function cleanupResultUrl() {
+    if (!resultUrl) return;
+    URL.revokeObjectURL(resultUrl);
+    resultUrl = '';
+  }
+
+  async function scrollToWorkspace() {
+    await tick();
+    workspaceRegion?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function cleanupThumbnails() {
+    Object.values(thumbUrls).forEach((url) => URL.revokeObjectURL(url));
+    thumbUrls = {};
+    thumbStatus = {};
+  }
+
+  async function destroyPreviewDoc() {
+    if (!previewDoc) return;
+    try {
+      await previewDoc.destroy();
+    } catch {
+      // pdf.js can throw if already destroyed.
+    } finally {
+      previewDoc = null;
+    }
+  }
+
+  onDestroy(() => {
+    renderToken += 1;
+    cleanupResultUrl();
+    cleanupThumbnails();
+    void destroyPreviewDoc();
+  });
 </script>
 
 <section class="delete-pages" aria-labelledby="delete-pages-title">
@@ -267,7 +397,7 @@
   {/if}
 
   {#if file && pageCount > 0}
-    <div class="delete-pages__workspace">
+    <div class="delete-pages__workspace" bind:this={workspaceRegion}>
       <section class="delete-pages__file-card" aria-labelledby="delete-file-title">
         <span class="delete-pages__file-icon" aria-hidden="true">PDF</span>
         <div>
@@ -298,6 +428,27 @@
 
       <section class="delete-pages__summary" aria-labelledby="delete-summary-title" aria-live="polite">
         <h3 id="delete-summary-title">{t.summaryTitle}</h3>
+        <div class="delete-pages__page-grid" aria-label={t.rangeLabel}>
+          {#each Array.from({ length: pageCount }, (_, index) => index + 1) as page}
+            <button
+              type="button"
+              class:delete-pages__page={true}
+              class:delete-pages__page--selected={pagesToDelete.includes(page)}
+              aria-pressed={pagesToDelete.includes(page)}
+              on:click={() => togglePageDelete(page)}
+            >
+              <span class="delete-pages__thumb">
+                {#if thumbStatus[page] === 'ready' && thumbUrls[page]}
+                  <img src={thumbUrls[page]} alt={`Página ${page}`} loading="lazy" />
+                {:else}
+                  <span>{thumbStatus[page] === 'pending' ? '…' : page}</span>
+                {/if}
+              </span>
+              <strong>Página {page}</strong>
+              <small>{pagesToDelete.includes(page) ? 'Eliminar' : 'Conservar'}</small>
+            </button>
+          {/each}
+        </div>
         {#if pagesToDelete.length > 0 && !errorMessage}
           <div class="delete-pages__summary-grid">
             <div>
@@ -347,6 +498,18 @@
       </div>
     </div>
   {/if}
+
+  <PdfResultModal
+    open={Boolean(resultUrl)}
+    pdfUrl={resultUrl}
+    filename={outputName()}
+    title={t.downloadAgain}
+    description={t.ready}
+    downloadLabel={t.downloadAgain}
+    openLabel={t.open}
+    closeLabel={t.close}
+    on:close={cleanupResultUrl}
+  />
 </section>
 
 <style>
@@ -373,6 +536,13 @@
   .delete-pages__field input[aria-invalid='true'] { border-color: #ef4444; }
   .delete-pages__summary { display: grid; gap: 12px; }
   .delete-pages__summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .delete-pages__page-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 12px; }
+  .delete-pages__page { display: grid; gap: 8px; padding: 10px; border: 2px solid #e2e8f0; border-radius: 18px; background: #fff; color: #0f172a; text-align: left; cursor: pointer; font: inherit; font-weight: 900; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05); transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease; }
+  .delete-pages__page:hover { transform: translateY(-1px); }
+  .delete-pages__page--selected { border-color: #ef4444; background: #fff1f2; color: #991b1b; box-shadow: 0 16px 34px rgba(239, 68, 68, 0.15); }
+  .delete-pages__thumb { display: grid; min-height: 146px; place-items: center; overflow: hidden; border: 1px solid #e2e8f0; border-radius: 14px; background: #f8fafc; color: #94a3b8; }
+  .delete-pages__thumb img { display: block; width: 100%; height: auto; }
+  .delete-pages__page small { color: #64748b; text-transform: uppercase; font-size: 0.72rem; }
   .delete-pages__summary-grid > div { display: grid; gap: 10px; padding: 14px; border-radius: 18px; background: #f8fafc; }
   .delete-pages__chips { display: flex; flex-wrap: wrap; gap: 8px; }
   .delete-pages__chip { display: inline-flex; padding: 7px 10px; border-radius: 999px; background: #dcfce7; color: #166534; font-weight: 950; }

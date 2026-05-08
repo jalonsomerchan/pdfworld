@@ -12,6 +12,7 @@ export interface RotatePdfOptions {
 export interface RotatePdfWithMapOptions {
   file: File;
   rotations: PageRotationMap;
+  pages?: number[];
 }
 
 export interface RotatePdfResult {
@@ -40,33 +41,55 @@ export async function rotatePdfInBrowser({ file, pages, rotation }: RotatePdfOpt
   };
 }
 
-export async function rotatePdfWithMapInBrowser({ file, rotations }: RotatePdfWithMapOptions): Promise<RotatePdfResult> {
+export async function rotatePdfWithMapInBrowser({ file, rotations, pages }: RotatePdfWithMapOptions): Promise<RotatePdfResult> {
   const sourceBytes = await fileToBytes(file);
-  const pdf = await PDFDocument.load(sourceBytes.slice(), { ignoreEncryption: false });
-  const pageCount = pdf.getPageCount();
+  const sourcePdf = await PDFDocument.load(sourceBytes.slice(), { ignoreEncryption: false });
+  const pageCount = sourcePdf.getPageCount();
+  const selectedPages = normalizePages(pages, pageCount);
   const normalizedRotations = normalizeRotationMap(rotations, pageCount);
   const rotatedPages = Object.keys(normalizedRotations).map(Number).sort((a, b) => a - b);
+  const outputPdf = await PDFDocument.create();
+  const copiedPages = await outputPdf.copyPages(sourcePdf, selectedPages.map((page) => page - 1));
 
-  rotatedPages.forEach((pageNumber) => {
-    const page = pdf.getPage(pageNumber - 1);
-    const currentRotation = page.getRotation().angle;
-    page.setRotation(degrees(normalizeDegrees(currentRotation + normalizedRotations[pageNumber])));
+  copiedPages.forEach((page, index) => {
+    const pageNumber = selectedPages[index];
+    const rotation = normalizedRotations[pageNumber] ?? 0;
+    if (rotation) {
+      page.setRotation(degrees(normalizeDegrees(page.getRotation().angle + rotation)));
+    }
+    outputPdf.addPage(page);
   });
 
-  pdf.setTitle(`Rotado - ${file.name}`);
-  pdf.setCreator('PDFWorld');
-  pdf.setProducer('PDFWorld');
+  outputPdf.setTitle(`Rotado - ${file.name}`);
+  outputPdf.setCreator('FácilPDF');
+  outputPdf.setProducer('FácilPDF');
 
-  const outputBytes = await pdf.save({ useObjectStreams: true });
+  const outputBytes = await outputPdf.save({ useObjectStreams: true });
 
   return {
     bytes: outputBytes,
     originalSize: sourceBytes.byteLength,
     outputSize: outputBytes.byteLength,
-    pageCount,
+    pageCount: selectedPages.length,
     rotatedPages,
     rotations: normalizedRotations,
   };
+}
+
+function normalizePages(pages: number[] | undefined, totalPages: number) {
+  const selected = pages?.length ? [...new Set(pages)].sort((a, b) => a - b) : Array.from({ length: totalPages }, (_, index) => index + 1);
+
+  selected.forEach((page) => {
+    if (!Number.isSafeInteger(page) || page < 1 || page > totalPages) {
+      throw new Error(`Page ${page} is outside the PDF page range.`);
+    }
+  });
+
+  if (selected.length === 0) {
+    throw new Error('At least one page is required.');
+  }
+
+  return selected;
 }
 
 function normalizeRotationMap(rotations: PageRotationMap, pageCount: number) {

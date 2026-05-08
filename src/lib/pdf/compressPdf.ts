@@ -37,6 +37,8 @@ export interface CompressionResult {
 export interface CompressPdfOptions {
   file: File;
   level: CompressionLevel;
+  pages?: number[];
+  rotations?: Record<number, number>;
   onProgress?: (progress: CompressionProgress) => void;
 }
 
@@ -64,7 +66,7 @@ export const compressionPresets: Record<CompressionLevel, CompressionPreset> = {
   },
 };
 
-export async function compressPdfInBrowser({ file, level, onProgress }: CompressPdfOptions): Promise<CompressionResult> {
+export async function compressPdfInBrowser({ file, level, pages, rotations = {}, onProgress }: CompressPdfOptions): Promise<CompressionResult> {
   const preset = compressionPresets[level];
   const arrayBuffer = await file.arrayBuffer();
   const sourceBytes = new Uint8Array(arrayBuffer.slice(0));
@@ -84,17 +86,20 @@ export async function compressPdfInBrowser({ file, level, onProgress }: Compress
   try {
     const outputPdf = await PDFDocument.create();
     outputPdf.setTitle(`Comprimido - ${file.name}`);
-    outputPdf.setCreator('PDFWorld');
-    outputPdf.setProducer('PDFWorld');
+    outputPdf.setCreator('FácilPDF');
+    outputPdf.setProducer('FácilPDF');
 
-    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-      onProgress?.({ currentPage: pageNumber, totalPages: pdf.numPages, stage: 'rendering' });
+    const pageNumbers = normalizePages(pages, pdf.numPages);
+
+    for (let index = 0; index < pageNumbers.length; index += 1) {
+      const pageNumber = pageNumbers[index];
+      onProgress?.({ currentPage: index + 1, totalPages: pageNumbers.length, stage: 'rendering' });
 
       const page = await pdf.getPage(pageNumber);
-      const renderedPage = await renderPageToJpeg(page, preset);
+      const renderedPage = await renderPageToJpeg(page, preset, normalizeDegrees(rotations[pageNumber] ?? 0));
       page.cleanup();
 
-      onProgress?.({ currentPage: pageNumber, totalPages: pdf.numPages, stage: 'building' });
+      onProgress?.({ currentPage: index + 1, totalPages: pageNumbers.length, stage: 'building' });
 
       const image = await outputPdf.embedJpg(renderedPage.jpegBytes);
       const pdfPage = outputPdf.addPage([renderedPage.width, renderedPage.height]);
@@ -108,7 +113,7 @@ export async function compressPdfInBrowser({ file, level, onProgress }: Compress
       await yieldToBrowser();
     }
 
-    onProgress?.({ currentPage: pdf.numPages, totalPages: pdf.numPages, stage: 'saving' });
+    onProgress?.({ currentPage: pageNumbers.length, totalPages: pageNumbers.length, stage: 'saving' });
 
     const compressedBytes = await outputPdf.save({ useObjectStreams: true });
     const reductionPercent = calculateReduction(sourceBytes.byteLength, compressedBytes.byteLength);
@@ -117,7 +122,7 @@ export async function compressPdfInBrowser({ file, level, onProgress }: Compress
       bytes: compressedBytes,
       originalSize: sourceBytes.byteLength,
       compressedSize: compressedBytes.byteLength,
-      pageCount: pdf.numPages,
+      pageCount: pageNumbers.length,
       reductionPercent,
       wasReduced: compressedBytes.byteLength < sourceBytes.byteLength,
     };
@@ -126,9 +131,10 @@ export async function compressPdfInBrowser({ file, level, onProgress }: Compress
   }
 }
 
-async function renderPageToJpeg(page: PDFPageProxy, preset: CompressionPreset) {
+async function renderPageToJpeg(page: PDFPageProxy, preset: CompressionPreset, rotation = 0) {
   const baseViewport = page.getViewport({ scale: 1 });
-  const renderViewport = page.getViewport({ scale: preset.scale });
+  const renderViewport = page.getViewport({ scale: preset.scale, rotation: normalizeDegrees(baseViewport.rotation + rotation) });
+  const outputViewport = page.getViewport({ scale: 1, rotation: normalizeDegrees(baseViewport.rotation + rotation) });
   const canvas = document.createElement('canvas');
   const context = canvas.getContext('2d', { alpha: false });
 
@@ -151,9 +157,25 @@ async function renderPageToJpeg(page: PDFPageProxy, preset: CompressionPreset) {
 
   return {
     jpegBytes,
-    width: baseViewport.width,
-    height: baseViewport.height,
+    width: outputViewport.width,
+    height: outputViewport.height,
   };
+}
+
+function normalizePages(pages: number[] | undefined, totalPages: number) {
+  const selected = pages?.length ? [...new Set(pages)].sort((a, b) => a - b) : Array.from({ length: totalPages }, (_, index) => index + 1);
+
+  selected.forEach((page) => {
+    if (!Number.isSafeInteger(page) || page < 1 || page > totalPages) {
+      throw new Error(`Page ${page} is outside the PDF page range.`);
+    }
+  });
+
+  return selected;
+}
+
+function normalizeDegrees(value: number) {
+  return ((value % 360) + 360) % 360;
 }
 
 function canvasToBlob(canvas: HTMLCanvasElement, quality: number) {

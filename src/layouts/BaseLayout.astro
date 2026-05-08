@@ -17,7 +17,7 @@ const alternateLinks = getAlternateLinks(path);
 const structuredData = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
-  name: 'PDFWorld',
+  name: 'FácilPDF',
   url: new URL(getLocalizedPath(lang), Astro.site).toString(),
   inLanguage: lang,
   description,
@@ -62,7 +62,7 @@ const navLabels = {
     ))}
     <link rel="alternate" hreflang="x-default" href={new URL(getLocalizedPath('es', path), Astro.site)} />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="PDFWorld" />
+    <meta property="og:site_name" content="FácilPDF" />
     <meta property="og:locale" content={lang === 'es' ? 'es_ES' : 'en_US'} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
@@ -76,9 +76,9 @@ const navLabels = {
   </head>
   <body>
     <header class="site-header">
-      <a class="brand" href={getLocalizedPath(lang)} aria-label="PDFWorld home">
+      <a class="brand" href={getLocalizedPath(lang)} aria-label="FácilPDF home">
         <span class="brand__mark" aria-hidden="true">PDF</span>
-        <strong>PDFWorld</strong>
+        <strong>FácilPDF</strong>
       </a>
 
       <nav class="primary-nav" aria-label="PDF tools navigation">
@@ -125,11 +125,6 @@ const navLabels = {
             </a>
           ))}
         </nav>
-        <a class="site-login" href={getLocalizedPath(lang)}>{navLabels[lang].login}</a>
-        <a class="site-register" href={getLocalizedPath(lang)}>{navLabels[lang].register}</a>
-        <button class="tools-launcher" type="button" aria-label={navLabels[lang].toolsMenu}>
-          <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
-        </button>
       </div>
     </header>
 

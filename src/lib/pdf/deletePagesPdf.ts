@@ -37,8 +37,8 @@ export async function deletePagesFromPdfInBrowser({ file, pagesToDelete }: Delet
   const copiedPages = await outputPdf.copyPages(sourcePdf, keptPages.map((page) => page - 1));
   copiedPages.forEach((page) => outputPdf.addPage(page));
   outputPdf.setTitle(`Sin páginas - ${file.name}`);
-  outputPdf.setCreator('PDFWorld');
-  outputPdf.setProducer('PDFWorld');
+  outputPdf.setCreator('FácilPDF');
+  outputPdf.setProducer('FácilPDF');
 
   const outputBytes = await outputPdf.save({ useObjectStreams: true });
 

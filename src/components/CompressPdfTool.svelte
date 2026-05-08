@@ -1,6 +1,8 @@
 <script lang="ts">
-  import { saveAs } from 'file-saver';
+  import { onDestroy, tick } from 'svelte';
   import PdfDropzone from './PdfDropzone.svelte';
+  import PdfResultModal from './PdfResultModal.svelte';
+  import { createPdfObjectUrl, formatFileSize, yieldToBrowser } from '../lib/pdfToolUtils';
   import {
     compressPdfInBrowser,
     compressionPresets,
@@ -39,6 +41,8 @@
       compress: 'Comprimir PDF',
       compressing: 'Comprimiendo…',
       download: 'Descargar PDF comprimido',
+      open: 'Abrir en pestaña',
+      close: 'Cerrar',
       clear: 'Limpiar',
       invalidFile: 'Selecciona un archivo PDF válido.',
       needFile: 'Primero carga un PDF.',
@@ -50,6 +54,12 @@
       building: 'Reconstruyendo página',
       saving: 'Guardando PDF…',
       pages: 'páginas',
+      page: 'Página',
+      pageEditor: 'Páginas que se comprimirán',
+      rotateLeft: 'Girar izquierda',
+      rotateRight: 'Girar derecha',
+      removePage: 'Eliminar página',
+      restorePage: 'Restaurar página',
       outputName: 'pdfworld-comprimido.pdf',
     },
     en: {
@@ -77,6 +87,8 @@
       compress: 'Compress PDF',
       compressing: 'Compressing…',
       download: 'Download compressed PDF',
+      open: 'Open in tab',
+      close: 'Close',
       clear: 'Clear',
       invalidFile: 'Select a valid PDF file.',
       needFile: 'Load a PDF first.',
@@ -88,6 +100,12 @@
       building: 'Rebuilding page',
       saving: 'Saving PDF…',
       pages: 'pages',
+      page: 'Page',
+      pageEditor: 'Pages to compress',
+      rotateLeft: 'Rotate left',
+      rotateRight: 'Rotate right',
+      removePage: 'Remove page',
+      restorePage: 'Restore page',
       outputName: 'pdfworld-compressed.pdf',
     },
   } as const;
@@ -101,6 +119,16 @@
   let isCompressing = false;
   let errorMessage = '';
   let statusMessage = '';
+  let resultUrl = '';
+  let workspaceRegion: HTMLDivElement;
+  let pageCount = 0;
+  let pagesToKeep: number[] = [];
+  let rotations: Record<number, number> = {};
+  let thumbUrls: Record<number, string> = {};
+  let thumbStatus: Record<number, 'pending' | 'ready' | 'failed'> = {};
+  let pdfJsPromise: Promise<any> | null = null;
+  let previewDoc: any = null;
+  let renderToken = 0;
 
   $: t = labels[lang] ?? labels.es;
   $: canCompress = Boolean(file && !isCompressing);
@@ -117,6 +145,15 @@
     progress = null;
     errorMessage = '';
     statusMessage = '';
+    pageCount = 0;
+    pagesToKeep = [];
+    rotations = {};
+    renderToken += 1;
+    cleanupThumbnails();
+    void destroyPreviewDoc();
+    cleanupResultUrl();
+    if (nextFile) void loadPreview(nextFile);
+    await scrollToWorkspace();
   }
 
   function handleInvalidFiles() {
@@ -140,12 +177,15 @@
       const nextResult = await compressPdfInBrowser({
         file,
         level,
+        pages: pagesToKeep,
+        rotations,
         onProgress: (nextProgress) => {
           progress = nextProgress;
         },
       });
 
       result = nextResult;
+      resultUrl = createPdfObjectUrl(nextResult.bytes);
       statusMessage = nextResult.wasReduced ? t.ready : t.notReduced;
     } catch {
       errorMessage = t.createError;
@@ -155,14 +195,16 @@
     }
   }
 
-  function downloadCompressedPdf() {
-    if (!result) return;
-    saveAs(new Blob([result.bytes], { type: 'application/pdf' }), getOutputName());
-  }
-
   function clearTool() {
     file = null;
     result = null;
+    cleanupResultUrl();
+    pageCount = 0;
+    pagesToKeep = [];
+    rotations = {};
+    renderToken += 1;
+    cleanupThumbnails();
+    void destroyPreviewDoc();
     progress = null;
     isCompressing = false;
     errorMessage = '';
@@ -186,9 +228,137 @@
 
   function formatSize(bytes: number) {
     if (!Number.isFinite(bytes) || bytes <= 0) return '0 KB';
-    if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
-    return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+    return formatFileSize(bytes);
   }
+
+  async function loadPdfJs() {
+    if (!pdfJsPromise) {
+      pdfJsPromise = Promise.all([import('pdfjs-dist/legacy/build/pdf.mjs'), import('pdfjs-dist/legacy/build/pdf.worker.mjs?url')]).then(([pdfJs, worker]) => {
+        pdfJs.GlobalWorkerOptions.workerSrc = worker.default;
+        return pdfJs;
+      });
+    }
+
+    return pdfJsPromise;
+  }
+
+  async function loadPreview(sourceFile: File) {
+    const token = ++renderToken;
+
+    try {
+      const pdfJs = await loadPdfJs();
+      const bytes = new Uint8Array((await sourceFile.arrayBuffer()).slice(0));
+      previewDoc = await pdfJs.getDocument({ data: bytes, useWorkerFetch: false, isEvalSupported: false, disableAutoFetch: true, disableStream: true }).promise;
+      pageCount = previewDoc.numPages;
+      pagesToKeep = Array.from({ length: pageCount }, (_, index) => index + 1);
+      thumbStatus = Object.fromEntries(pagesToKeep.map((page) => [page, 'pending']));
+
+      for (let page = 1; page <= previewDoc.numPages; page += 1) {
+        if (token !== renderToken || !previewDoc) return;
+        await yieldToBrowser();
+
+        try {
+          const pdfPage = await previewDoc.getPage(page);
+          const url = await renderThumb(pdfPage);
+          pdfPage.cleanup();
+
+          if (token !== renderToken) {
+            URL.revokeObjectURL(url);
+            return;
+          }
+
+          if (thumbUrls[page]) URL.revokeObjectURL(thumbUrls[page]);
+          thumbUrls = { ...thumbUrls, [page]: url };
+          thumbStatus = { ...thumbStatus, [page]: 'ready' };
+        } catch {
+          thumbStatus = { ...thumbStatus, [page]: 'failed' };
+        }
+      }
+    } catch {
+      errorMessage = t.invalidFile;
+    }
+  }
+
+  async function renderThumb(pdfPage: any) {
+    const viewport = pdfPage.getViewport({ scale: 0.22 });
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d', { alpha: false });
+    if (!context) throw new Error('No canvas context');
+    canvas.width = Math.max(1, Math.floor(viewport.width));
+    canvas.height = Math.max(1, Math.floor(viewport.height));
+    context.fillStyle = '#fff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    await pdfPage.render({ canvasContext: context, viewport }).promise;
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/webp', 0.76));
+    if (!blob) throw new Error('No thumbnail blob');
+    return URL.createObjectURL(blob);
+  }
+
+  function togglePage(page: number) {
+    if (pagesToKeep.includes(page)) {
+      if (pagesToKeep.length <= 1) return;
+      pagesToKeep = pagesToKeep.filter((item) => item !== page);
+    } else {
+      pagesToKeep = [...pagesToKeep, page].sort((a, b) => a - b);
+    }
+    result = null;
+    cleanupResultUrl();
+  }
+
+  function rotatePage(page: number, delta: 90 | -90) {
+    rotations = { ...rotations, [page]: normalizeRotation((rotations[page] ?? 0) + delta) };
+    if (rotations[page] === 0) {
+      const { [page]: _removed, ...rest } = rotations;
+      rotations = rest;
+    }
+    result = null;
+    cleanupResultUrl();
+  }
+
+  function thumbStyle(page: number) {
+    const rotation = normalizeRotation(rotations[page] ?? 0);
+    const scale = rotation === 90 || rotation === 270 ? 0.72 : 1;
+    return `transform: rotate(${rotation}deg) scale(${scale});`;
+  }
+
+  function normalizeRotation(value: number) {
+    return ((value % 360) + 360) % 360;
+  }
+
+  function cleanupResultUrl() {
+    if (!resultUrl) return;
+    URL.revokeObjectURL(resultUrl);
+    resultUrl = '';
+  }
+
+  function cleanupThumbnails() {
+    Object.values(thumbUrls).forEach((url) => URL.revokeObjectURL(url));
+    thumbUrls = {};
+    thumbStatus = {};
+  }
+
+  async function destroyPreviewDoc() {
+    if (!previewDoc) return;
+    try {
+      await previewDoc.destroy();
+    } catch {
+      // pdf.js can throw if already destroyed.
+    } finally {
+      previewDoc = null;
+    }
+  }
+
+  async function scrollToWorkspace() {
+    await tick();
+    workspaceRegion?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  onDestroy(() => {
+    renderToken += 1;
+    cleanupResultUrl();
+    cleanupThumbnails();
+    void destroyPreviewDoc();
+  });
 </script>
 
 <section class="compress-tool" aria-labelledby="compress-tool-title">
@@ -226,7 +396,7 @@
   {/if}
 
   {#if file}
-    <div class="compress-tool__workspace">
+    <div class="compress-tool__workspace" bind:this={workspaceRegion}>
       <section class="compress-tool__file-card" aria-labelledby="compress-file-title">
         <span class="compress-tool__file-icon" aria-hidden="true">PDF</span>
         <div>
@@ -272,6 +442,39 @@
         {/if}
       </section>
 
+      {#if pageCount > 0}
+        <section class="compress-tool__pages" aria-labelledby="compress-pages-title">
+          <h3 id="compress-pages-title">{t.pageEditor}</h3>
+          <div class="compress-tool__page-grid">
+            {#each Array.from({ length: pageCount }, (_, index) => index + 1) as page}
+              <article class:compress-tool__page={true} class:compress-tool__page--disabled={!pagesToKeep.includes(page)}>
+                <button
+                  type="button"
+                  class="compress-tool__page-toggle"
+                  aria-pressed={pagesToKeep.includes(page)}
+                  on:click={() => togglePage(page)}
+                >
+                  {#if thumbStatus[page] === 'ready' && thumbUrls[page]}
+                    <img src={thumbUrls[page]} alt={`${t.page} ${page}`} style={thumbStyle(page)} loading="lazy" />
+                  {:else}
+                    <span>{thumbStatus[page] === 'pending' ? '…' : page}</span>
+                  {/if}
+                </button>
+                <div class="compress-tool__page-meta">
+                  <strong>{t.page} {page}</strong>
+                  <span>{normalizeRotation(rotations[page] ?? 0)}°</span>
+                </div>
+                <div class="compress-tool__page-actions">
+                  <button type="button" on:click={() => rotatePage(page, -90)} aria-label={`${t.rotateLeft} ${page}`}>↶</button>
+                  <button type="button" on:click={() => rotatePage(page, 90)} aria-label={`${t.rotateRight} ${page}`}>↷</button>
+                  <button type="button" on:click={() => togglePage(page)}>{pagesToKeep.includes(page) ? t.removePage : t.restorePage}</button>
+                </div>
+              </article>
+            {/each}
+          </div>
+        </section>
+      {/if}
+
       {#if progress}
         <section class="compress-tool__progress" aria-label={getProgressLabel()} aria-live="polite">
           <div>
@@ -287,12 +490,24 @@
         <button type="button" class="compress-tool__primary" on:click={compressPdf} disabled={!canCompress}>
           {isCompressing ? t.compressing : t.compress}
         </button>
-        <button type="button" class="compress-tool__primary compress-tool__primary--dark" on:click={downloadCompressedPdf} disabled={!result || isCompressing}>
+        <button type="button" class="compress-tool__primary compress-tool__primary--dark" on:click={() => (resultUrl = resultUrl || (result ? createPdfObjectUrl(result.bytes) : ''))} disabled={!result || isCompressing}>
           {t.download}
         </button>
       </div>
     </div>
   {/if}
+
+  <PdfResultModal
+    open={Boolean(resultUrl)}
+    pdfUrl={resultUrl}
+    filename={getOutputName()}
+    title={t.download}
+    description={t.ready}
+    downloadLabel={t.download}
+    openLabel={t.open}
+    closeLabel={t.close}
+    on:close={cleanupResultUrl}
+  />
 </section>
 
 <style>
@@ -403,6 +618,7 @@
   .compress-tool__settings,
   .compress-tool__metrics,
   .compress-tool__progress,
+  .compress-tool__pages,
   .compress-tool__actions {
     grid-column: 1 / -1;
   }
@@ -505,6 +721,93 @@
   .compress-tool__progress {
     display: grid;
     gap: 10px;
+  }
+
+  .compress-tool__pages {
+    display: grid;
+    gap: 14px;
+    padding: 18px;
+    border: 1px solid #e2e8f0;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.88);
+  }
+
+  .compress-tool__pages h3 {
+    margin: 0;
+  }
+
+  .compress-tool__page-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+  }
+
+  .compress-tool__page {
+    display: grid;
+    gap: 9px;
+    padding: 10px;
+    border: 2px solid #e2e8f0;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+  }
+
+  .compress-tool__page--disabled {
+    opacity: 0.58;
+  }
+
+  .compress-tool__page-toggle {
+    display: grid;
+    min-height: 168px;
+    place-items: center;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #f8fafc;
+    color: #94a3b8;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 950;
+  }
+
+  .compress-tool__page-toggle img {
+    display: block;
+    width: 100%;
+    height: auto;
+    transition: transform 180ms ease;
+  }
+
+  .compress-tool__page-meta,
+  .compress-tool__page-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .compress-tool__page-meta span {
+    padding: 5px 8px;
+    border-radius: 999px;
+    background: #fef3c7;
+    color: #92400e;
+    font-weight: 950;
+    font-size: 0.8rem;
+  }
+
+  .compress-tool__page-actions {
+    flex-wrap: wrap;
+  }
+
+  .compress-tool__page-actions button {
+    flex: 1 1 auto;
+    min-height: 36px;
+    border: 0;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: #334155;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 900;
   }
 
   .compress-tool__progress div {

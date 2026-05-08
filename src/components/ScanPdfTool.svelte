@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { onDestroy, onMount } from 'svelte';
+  import { onDestroy, onMount, tick } from 'svelte';
   import { PDFDocument } from 'pdf-lib';
-  import { saveAs } from 'file-saver';
+  import PdfResultModal from './PdfResultModal.svelte';
   import { savePendingPdfTransfer } from '../lib/pdfTransfer';
+  import { createPdfObjectUrl, yieldToBrowser } from '../lib/pdfToolUtils';
 
   type Lang = 'es' | 'en';
 
@@ -125,6 +126,7 @@
   let resultBytes: Uint8Array | null = null;
   let previewUrl = '';
   let isPreviewOpen = false;
+  let pagesRegion: HTMLElement;
 
   $: t = labels[lang] ?? labels.es;
   $: canGenerate = pages.length > 0 && !isGenerating;
@@ -212,6 +214,7 @@
     clearResult();
     errorMessage = '';
     statusMessage = '';
+    void scrollToPages();
   }
 
   function rotatePage(id: string, delta: 90 | -90) {
@@ -275,7 +278,7 @@
 
       const bytes = await pdf.save({ useObjectStreams: true });
       resultBytes = new Uint8Array(bytes);
-      previewUrl = URL.createObjectURL(new Blob([resultBytes], { type: 'application/pdf' }));
+      previewUrl = createPdfObjectUrl(resultBytes);
       isPreviewOpen = openPreview;
       statusMessage = t.ready;
       return resultBytes;
@@ -316,12 +319,6 @@
     if (!blob) throw new Error('No blob generated');
 
     return { blob, width: outputWidth, height: outputHeight };
-  }
-
-  async function downloadPdf() {
-    const bytes = resultBytes ?? await generatePdf(false);
-    if (!bytes) return;
-    saveAs(new Blob([new Uint8Array(bytes)], { type: 'application/pdf' }), t.downloadName);
   }
 
   async function sendToTool(route: string) {
@@ -381,8 +378,9 @@
     return crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
   }
 
-  function yieldToBrowser() {
-    return new Promise<void>((resolve) => window.setTimeout(resolve, 0));
+  async function scrollToPages() {
+    await tick();
+    pagesRegion?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 </script>
 
@@ -440,7 +438,7 @@
   {#if errorMessage}<p class="scan-tool__message scan-tool__message--error" role="alert">{errorMessage}</p>{/if}
   {#if statusMessage}<p class="scan-tool__message scan-tool__message--success" role="status">{statusMessage}</p>{/if}
 
-  <section class="scan-tool__pages" aria-labelledby="scan-pages-title">
+  <section class="scan-tool__pages" bind:this={pagesRegion} aria-labelledby="scan-pages-title">
     <div class="scan-tool__section-head scan-tool__section-head--wide">
       <div>
         <h3 id="scan-pages-title">{t.preview}</h3>
@@ -449,7 +447,7 @@
       <div class="scan-tool__actions">
         <button type="button" class="scan-tool__secondary" disabled={!pages.length} on:click={() => clearPages()}>{t.clear}</button>
         <button type="button" class="scan-tool__primary" disabled={!canGenerate} on:click={() => generatePdf(true)}>{isGenerating ? t.generating : t.generate}</button>
-        <button type="button" class="scan-tool__dark" disabled={!canDownload} on:click={downloadPdf}>{t.download}</button>
+        <button type="button" class="scan-tool__dark" disabled={!canDownload} on:click={() => (isPreviewOpen = true)}>{t.download}</button>
       </div>
     </div>
 
@@ -492,24 +490,16 @@
   {/if}
 </section>
 
-{#if isPreviewOpen && previewUrl}
-  <div class="pdf-modal" role="dialog" aria-modal="true" aria-labelledby="scan-preview-title">
-    <div class="pdf-modal__backdrop" on:click={closePreview} aria-hidden="true"></div>
-    <div class="pdf-modal__panel">
-      <header class="pdf-modal__header">
-        <h2 id="scan-preview-title">{t.preview}</h2>
-        <div>
-          <button type="button" class="pdf-modal__download" on:click={downloadPdf}>{t.download}</button>
-          <button type="button" class="pdf-modal__close" on:click={closePreview} aria-label={t.closePreview}>×</button>
-        </div>
-      </header>
-      <object class="pdf-modal__viewer" data={previewUrl} type="application/pdf">
-        <p>{t.previewFallback}</p>
-        <button type="button" class="pdf-modal__download" on:click={downloadPdf}>{t.download}</button>
-      </object>
-    </div>
-  </div>
-{/if}
+<PdfResultModal
+  open={isPreviewOpen && Boolean(previewUrl)}
+  pdfUrl={previewUrl}
+  filename={t.downloadName}
+  title={t.preview}
+  description={t.ready}
+  downloadLabel={t.download}
+  closeLabel={t.closePreview}
+  on:close={closePreview}
+/>
 
 <style>
   .scan-tool{display:grid;gap:22px;margin:34px 0 56px;padding:clamp(18px,3vw,30px);border:1px solid #e2e8f0;border-radius:32px;background:radial-gradient(circle at top left,rgba(239,68,68,.12),transparent 34%),linear-gradient(135deg,rgba(255,255,255,.97),rgba(248,250,252,.9));box-shadow:0 30px 90px rgba(15,23,42,.11)}.scan-tool__hero,.scan-tool__section-head,.scan-tool__section-head--wide,.scan-tool__actions,.scan-tool__send div{display:flex;gap:14px;align-items:center}.scan-tool__hero,.scan-tool__section-head,.scan-tool__section-head--wide{justify-content:space-between}.scan-tool__hero h2,.scan-tool h3{margin:0}.scan-tool__hero h2{font-size:clamp(1.65rem,3vw,2.25rem);letter-spacing:-.04em}.scan-tool__hero p,.scan-tool__camera-card p,.scan-tool__section-head p,.scan-tool__empty,.scan-tool__page-card small{margin:0;color:#64748b}.scan-tool__eyebrow{display:inline-flex;margin-bottom:8px;padding:5px 10px;border-radius:999px;background:rgba(239,68,68,.1);color:#b91c1c;font-size:.78rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.scan-tool__counter{display:grid;min-width:150px;gap:2px;padding:14px 16px;border:1px solid #e2e8f0;border-radius:22px;background:rgba(255,255,255,.78);text-align:right}.scan-tool__counter strong{font-size:1.9rem;line-height:1}.scan-tool__counter span{color:#64748b;font-weight:800}.scan-tool__capture-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(280px,.75fr);gap:18px}.scan-tool__camera-card,.scan-tool__upload-card,.scan-tool__pages,.scan-tool__send{display:grid;gap:14px;padding:16px;border:1px solid #e2e8f0;border-radius:24px;background:#fff;box-shadow:0 16px 38px rgba(15,23,42,.06)}.scan-tool__video-frame{position:relative;display:grid;min-height:360px;overflow:hidden;place-items:center;border-radius:22px;background:#0f172a}.scan-tool__video-frame video{display:block;width:100%;height:100%;max-height:62vh;object-fit:cover}.scan-tool__video-placeholder{position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:10px;color:#fff;background:linear-gradient(135deg,#111827,#334155)}.scan-tool__video-placeholder span{font-size:3rem}.scan-tool__upload-button{display:grid;min-height:260px;place-items:center;align-content:center;gap:10px;width:100%;padding:28px;border:2px dashed #cbd5e1;border-radius:22px;background:linear-gradient(135deg,#f8fafc,#fff1f2);color:#0f172a;text-align:center}.scan-tool__upload-button span{font-size:2.4rem}.scan-tool button{border:0;cursor:pointer;font:inherit;font-weight:850;transition:transform 140ms ease,opacity 140ms ease,box-shadow 140ms ease}.scan-tool button:hover:not(:disabled){transform:translateY(-1px)}.scan-tool button:disabled{cursor:not-allowed;opacity:.45}.scan-tool__primary,.scan-tool__dark,.scan-tool__secondary,.scan-tool__send button{min-height:42px;padding:10px 14px;border-radius:999px}.scan-tool__primary{background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;box-shadow:0 16px 34px rgba(239,68,68,.24)}.scan-tool__dark{background:linear-gradient(135deg,#0f172a,#334155);color:#fff;box-shadow:0 16px 34px rgba(15,23,42,.18)}.scan-tool__secondary{background:#e2e8f0;color:#334155}.scan-tool__send button{background:#fff1f2;color:#991b1b}.scan-tool__file-input{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}.scan-tool__message,.scan-tool__empty{margin:0;padding:13px 15px;border-radius:16px;background:#f8fafc;font-weight:850}.scan-tool__message--error{background:#fff1f2;color:#991b1b}.scan-tool__message--success{background:#ecfdf5;color:#166534}.scan-tool__page-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(166px,1fr));gap:14px}.scan-tool__page-card{display:grid;gap:10px;padding:12px;border:2px solid #e2e8f0;border-radius:22px;background:#fff;box-shadow:0 12px 28px rgba(15,23,42,.06)}.scan-tool__thumb-frame{display:grid;min-height:210px;overflow:hidden;place-items:center;border:1px solid #e2e8f0;border-radius:16px;background:linear-gradient(135deg,#f8fafc,#fff1f2)}.scan-tool__thumb-frame img{display:block;max-width:86%;max-height:190px;object-fit:contain;box-shadow:0 12px 26px rgba(15,23,42,.16);transition:transform 180ms ease}.scan-tool__page-meta{display:flex;justify-content:space-between;gap:8px;align-items:center}.scan-tool__page-meta span{padding:5px 9px;border-radius:999px;background:#fee2e2;color:#991b1b;font-weight:950;font-size:.82rem}.scan-tool__page-actions{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.scan-tool__page-actions button{min-height:36px;padding:6px;border-radius:999px;background:#e2e8f0;color:#334155}.scan-tool__page-actions button:last-child{background:#fee2e2;color:#991b1b}.pdf-modal{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:20px}.pdf-modal__backdrop{position:absolute;inset:0;background:rgba(15,23,42,.72);backdrop-filter:blur(6px)}.pdf-modal__panel{position:relative;z-index:1;display:grid;grid-template-rows:auto minmax(0,1fr);width:min(1120px,96vw);height:min(820px,92vh);overflow:hidden;border-radius:24px;background:#fff;box-shadow:0 30px 90px rgba(0,0,0,.35)}.pdf-modal__header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;border-bottom:1px solid #e2e8f0}.pdf-modal__header h2{margin:0;font-size:1.05rem}.pdf-modal__header div{display:flex;gap:10px;align-items:center}.pdf-modal__viewer{width:100%;height:100%;border:0;background:#f8fafc}.pdf-modal__download,.pdf-modal__close{border:0;cursor:pointer;font:inherit;font-weight:950}.pdf-modal__download{min-height:40px;padding:9px 14px;border-radius:999px;background:#ef4444;color:#fff}.pdf-modal__close{display:grid;width:40px;height:40px;place-items:center;border-radius:999px;background:#e2e8f0;color:#0f172a;font-size:1.35rem;line-height:1}@media (prefers-reduced-motion:reduce){.scan-tool button,.scan-tool__thumb-frame img{transition:none}}@media (max-width:900px){.scan-tool__hero,.scan-tool__capture-grid,.scan-tool__section-head--wide{display:grid;grid-template-columns:1fr}.scan-tool__counter{text-align:left}.scan-tool__actions,.scan-tool__send div{display:grid;grid-template-columns:1fr}.scan-tool__video-frame{min-height:310px}.pdf-modal{padding:10px}.pdf-modal__panel{height:94vh;border-radius:18px}}@media (max-width:560px){.scan-tool__page-grid{grid-template-columns:repeat(auto-fill,minmax(138px,1fr))}.scan-tool__thumb-frame{min-height:170px}.scan-tool__thumb-frame img{max-height:150px}.scan-tool__section-head{align-items:start;display:grid;grid-template-columns:1fr}}
