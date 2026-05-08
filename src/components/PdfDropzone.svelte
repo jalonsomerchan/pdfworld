@@ -1,16 +1,36 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+  import { consumePendingPdfTransfer } from '../lib/pdfTransfer';
+
   export let title = 'Arrastra tus PDF aquí';
   export let activeTitle = 'Suelta para añadirlos';
   export let subtitle = 'Suelta los archivos o pulsa para seleccionarlos';
   export let help = 'Solo PDF. Privado, local y sin subir nada a servidores.';
   export let multiple = false;
   export let selectedLabel = '';
+  export let acceptTransfers = true;
   export let onFiles: (files: File[]) => void | Promise<void> = () => {};
   export let onInvalidFiles: (files: File[]) => void | Promise<void> = () => {};
 
   let inputElement: HTMLInputElement;
   let isDragging = false;
   let dragDepth = 0;
+
+  onMount(async () => {
+    if (!acceptTransfers) return;
+
+    try {
+      const transfer = await consumePendingPdfTransfer();
+      if (transfer?.file) {
+        selectedLabel = document.documentElement.lang === 'en'
+          ? `Imported from ${transfer.source}: ${transfer.file.name}`
+          : `Importado desde ${transfer.source}: ${transfer.file.name}`;
+        await onFiles([transfer.file]);
+      }
+    } catch {
+      // Ignore transfer errors so the normal uploader keeps working.
+    }
+  });
 
   function openFileDialog() {
     inputElement?.click();
