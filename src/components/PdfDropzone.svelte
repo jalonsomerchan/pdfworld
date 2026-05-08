@@ -12,21 +12,30 @@
   export let acceptedExtensions = ['.pdf'];
   export let selectedLabel = '';
   export let acceptTransfers = true;
+  export let showPrivacyLink = true;
   export let onFiles: (files: File[]) => void | Promise<void> = () => {};
   export let onInvalidFiles: (files: File[]) => void | Promise<void> = () => {};
 
   let inputElement: HTMLInputElement;
   let isDragging = false;
   let dragDepth = 0;
+  let privacyHref = '/es/privacidad';
+  let privacyText = 'Tus archivos se procesan en este navegador. Ver privacidad';
 
   onMount(() => {
+    const lang = document.documentElement.lang === 'en' ? 'en' : 'es';
+    privacyHref = `/${lang}/privacidad`;
+    privacyText = lang === 'en'
+      ? 'Files are processed in this browser. View privacy'
+      : 'Tus archivos se procesan en este navegador. Ver privacidad';
+
     if (!acceptTransfers) return;
 
     void (async () => {
       try {
         const transfer = await consumePendingPdfTransfer();
         if (transfer?.file) {
-          selectedLabel = document.documentElement.lang === 'en'
+          selectedLabel = lang === 'en'
             ? `Imported from ${transfer.source}: ${transfer.file.name}`
             : `Importado desde ${transfer.source}: ${transfer.file.name}`;
           await onFiles([transfer.file]);
@@ -92,29 +101,35 @@
   }
 </script>
 
-<button
-  type="button"
-  class:pdf-dropzone={true}
-  class:pdf-dropzone--active={isDragging}
-  aria-describedby="pdf-dropzone-help"
-  on:click={openFileDialog}
-  on:drop={handleDrop}
-  on:dragenter={handleDragEnter}
-  on:dragover={handleDragOver}
-  on:dragleave={handleDragLeave}
->
-  <span class="pdf-dropzone__glow" aria-hidden="true"></span>
-  <span class="pdf-dropzone__grid" aria-hidden="true"></span>
-  <span class="pdf-dropzone__icon-stack" aria-hidden="true">
-    <span class="pdf-dropzone__icon-card pdf-dropzone__icon-card--back">PDF</span>
-    <span class="pdf-dropzone__icon-card pdf-dropzone__icon-card--front">+</span>
-  </span>
-  <span class="pdf-dropzone__copy">
-    <strong>{isDragging ? activeTitle : title}</strong>
-    <span>{selectedLabel || subtitle}</span>
-    <small id="pdf-dropzone-help">{help}</small>
-  </span>
-</button>
+<div class="pdf-dropzone-shell">
+  <button
+    type="button"
+    class:pdf-dropzone={true}
+    class:pdf-dropzone--active={isDragging}
+    aria-describedby="pdf-dropzone-help"
+    on:click={openFileDialog}
+    on:drop={handleDrop}
+    on:dragenter={handleDragEnter}
+    on:dragover={handleDragOver}
+    on:dragleave={handleDragLeave}
+  >
+    <span class="pdf-dropzone__glow" aria-hidden="true"></span>
+    <span class="pdf-dropzone__grid" aria-hidden="true"></span>
+    <span class="pdf-dropzone__icon-stack" aria-hidden="true">
+      <span class="pdf-dropzone__icon-card pdf-dropzone__icon-card--back">PDF</span>
+      <span class="pdf-dropzone__icon-card pdf-dropzone__icon-card--front">+</span>
+    </span>
+    <span class="pdf-dropzone__copy">
+      <strong>{isDragging ? activeTitle : title}</strong>
+      <span>{selectedLabel || subtitle}</span>
+      <small id="pdf-dropzone-help">{help}</small>
+    </span>
+  </button>
+
+  {#if showPrivacyLink}
+    <p class="pdf-dropzone__privacy">🔒 <a href={privacyHref}>{privacyText}</a></p>
+  {/if}
+</div>
 
 <input
   bind:this={inputElement}
@@ -126,6 +141,12 @@
 />
 
 <style>
+  .pdf-dropzone-shell {
+    display: grid;
+    gap: 10px;
+    width: 100%;
+  }
+
   .pdf-dropzone {
     position: relative;
     isolation: isolate;
@@ -251,6 +272,24 @@
 
   .pdf-dropzone__copy small {
     color: #64748b;
+  }
+
+  .pdf-dropzone__privacy {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.9rem;
+    font-weight: 800;
+    text-align: center;
+  }
+
+  .pdf-dropzone__privacy a {
+    color: #b91c1c;
+    text-decoration: none;
+  }
+
+  .pdf-dropzone__privacy a:hover,
+  .pdf-dropzone__privacy a:focus-visible {
+    text-decoration: underline;
   }
 
   .pdf-dropzone__input {
