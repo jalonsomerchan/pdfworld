@@ -1,4 +1,5 @@
 ---
+import MergePdfTool from '../../components/MergePdfTool.svelte';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { isLang, useTranslations, type Lang } from '../../i18n/utils';
 import { locales } from '../../i18n/ui';
@@ -27,6 +28,8 @@ const t = useTranslations(lang as Lang);
     <h1>{t('tool.merge.h1')}</h1>
     <p class="lead">{t('tool.merge.lead')}</p>
   </section>
+
+  <MergePdfTool client:load lang={lang} />
 
   <section aria-labelledby="how-title">
     <h2 id="how-title">{t('tool.merge.howTitle')}</h2>
