@@ -6,11 +6,11 @@
     getDocument,
     type PDFDocumentProxy,
     type PDFPageProxy,
-    type RenderTask,
   } from 'pdfjs-dist';
   import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
 
   type PdfSource = File | Blob | ArrayBuffer | Uint8Array | null;
+  type PdfRenderTask = ReturnType<PDFPageProxy['render']>;
 
   export interface PageSelectionDetail {
     pageNumber: number;
@@ -48,8 +48,8 @@
   let isLoading = false;
   let isRendering = false;
   let errorMessage = '';
-  let canvasElement: HTMLCanvasElement;
-  let renderTask: RenderTask | null = null;
+  let canvasElement: HTMLCanvasElement | undefined;
+  let renderTask: PdfRenderTask | null = null;
   let loadToken = 0;
   let renderToken = 0;
   let thumbnailToken = 0;
@@ -62,7 +62,7 @@
 
   async function readSourceData(input: Exclude<PdfSource, null>): Promise<Uint8Array> {
     if (input instanceof Uint8Array) {
-      return input;
+      return input.slice();
     }
 
     if (input instanceof ArrayBuffer) {
