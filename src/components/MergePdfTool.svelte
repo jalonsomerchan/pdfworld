@@ -213,8 +213,7 @@
 
   <button
     type="button"
-    class:merge-tool__dropzone={true}
-    class:merge-tool__dropzone--active={isDragging}
+    class={`merge-tool__dropzone${isDragging ? ' merge-tool__dropzone--active' : ''}`}
     on:click={openFileDialog}
     on:drop={handleDrop}
     on:dragover={handleDragOver}
@@ -255,7 +254,7 @@
     {:else}
       <ol class="merge-tool__list">
         {#each files as item, index (item.id)}
-          <li class:merge-tool__file--error={Boolean(item.error)}>
+          <li class={item.error ? 'merge-tool__file--error' : undefined}>
             <div class="merge-tool__file-main">
               <span class="merge-tool__file-index">{index + 1}</span>
               <div>
