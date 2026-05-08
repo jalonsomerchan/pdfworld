@@ -32,6 +32,7 @@ const navLabels = {
     register: 'Registro',
     toolsMenu: 'Menú de herramientas',
     categories: 'Categorías',
+    privacy: 'Privacidad',
   },
   en: {
     allTools: 'All PDF tools',
@@ -40,6 +41,7 @@ const navLabels = {
     register: 'Register',
     toolsMenu: 'Tools menu',
     categories: 'Categories',
+    privacy: 'Privacy',
   },
 };
 ---
@@ -133,7 +135,10 @@ const navLabels = {
     </main>
 
     <footer class="site-footer">
-      <p><slot name="footer" /></p>
+      <div class="site-footer__inner">
+        <p><slot name="footer" /></p>
+        <a href={getLocalizedPath(lang, 'privacidad')}>{navLabels[lang].privacy}</a>
+      </div>
     </footer>
   </body>
 </html>
