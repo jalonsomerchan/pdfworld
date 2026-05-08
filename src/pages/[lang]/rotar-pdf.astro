@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import RotatePdfTool from '../../components/RotatePdfTool.svelte';
+import RotatePdfTool from '../../components/RotatePdfToolPro.svelte';
 import { getLocalizedPath, isLang, type Lang } from '../../i18n/utils';
 import { locales } from '../../i18n/ui';
 
@@ -17,30 +17,30 @@ if (!isLang(lang)) {
 const copy = {
   es: {
     title: 'Rotar PDF online gratis y privado',
-    description: 'Rota todas o algunas páginas de un PDF directamente en tu navegador. Gratis, privado y sin subir archivos a ningún servidor.',
+    description: 'Rota visualmente páginas individuales de un PDF directamente en tu navegador. Gratis, privado y sin subir archivos a ningún servidor.',
     badge: '100% privado · Sin subidas · En tu navegador',
     h1: 'Rotar PDF online',
-    lead: 'Gira páginas de un PDF a 90, 180 o 270 grados. Puedes aplicar la rotación a todo el documento o solo a páginas y rangos concretos.',
+    lead: 'Visualiza miniaturas de cada página, gira páginas individuales o todo el documento y descarga una copia nueva del PDF rotado.',
     howTitle: 'Cómo rotar un PDF',
     step1: 'Selecciona un archivo PDF desde tu dispositivo.',
-    step2: 'Elige los grados de rotación y si quieres aplicarlos a todas las páginas o a rangos concretos.',
+    step2: 'Usa las miniaturas para girar páginas concretas o aplica giros rápidos a todo el documento.',
     step3: 'Revisa el resumen de cambios y descarga una copia nueva del PDF rotado.',
     privacyTitle: 'Rotar PDF sin subir archivos',
-    privacyText: 'La lectura y modificación del documento se hacen con pdf-lib directamente en tu navegador. El archivo original no se modifica y no se envía a ningún servidor.',
+    privacyText: 'La previsualización se genera en el navegador con pdf.js y la modificación final se hace con pdf-lib. El archivo original no se modifica ni se envía a ningún servidor.',
     footer: 'Tus archivos se procesan localmente en tu navegador.',
   },
   en: {
     title: 'Rotate PDF online for free and privately',
-    description: 'Rotate all or some PDF pages directly in your browser. Free, private and without uploading files to any server.',
+    description: 'Visually rotate individual PDF pages directly in your browser. Free, private and without uploading files to any server.',
     badge: '100% private · No uploads · In your browser',
     h1: 'Rotate PDF online',
-    lead: 'Rotate PDF pages by 90, 180 or 270 degrees. Apply the rotation to the whole document or only to specific pages and ranges.',
+    lead: 'Preview thumbnails for every page, rotate individual pages or the whole document, and download a new rotated PDF copy.',
     howTitle: 'How to rotate a PDF',
     step1: 'Select a PDF file from your device.',
-    step2: 'Choose the rotation degrees and whether to apply them to all pages or to specific ranges.',
+    step2: 'Use thumbnails to rotate specific pages or apply quick rotations to the whole document.',
     step3: 'Review the change summary and download a new rotated PDF copy.',
     privacyTitle: 'Rotate PDF without uploads',
-    privacyText: 'The document is read and modified with pdf-lib directly in your browser. The original file is not changed and is never sent to a server.',
+    privacyText: 'The preview is generated in the browser with pdf.js and the final edit is made with pdf-lib. The original file is not changed and is never sent to a server.',
     footer: 'Your files are processed locally in your browser.',
   },
 } as const;
