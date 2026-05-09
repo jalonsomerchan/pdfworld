@@ -1,7 +1,8 @@
+import { pdfTools } from '../data/tools';
 import { locales } from '../i18n/ui';
 import { getLocalizedPath } from '../i18n/utils';
 
-const pages = ['', 'unir-pdf'];
+const pages = ['', ...pdfTools.filter((tool) => tool.status === 'available').map((tool) => tool.route)];
 
 export async function GET({ site }: { site: URL }) {
   const urls = pages.flatMap((page) =>
