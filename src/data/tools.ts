@@ -167,6 +167,14 @@ export const pdfTools = [
     seo: { title: { es: 'Escanear PDF online desde el móvil', en: 'Scan PDF online from mobile' }, description: { es: 'Escanea documentos con la cámara, genera un PDF en el navegador y pásalo automáticamente a otras herramientas PDF.', en: 'Scan documents with the camera, generate a PDF in the browser and send it automatically to other PDF tools.' } },
   },
   {
+    id: 'images-to-pdf',
+    title: { es: 'Imágenes a PDF', en: 'Images to PDF' },
+    description: { es: 'Convierte JPG, PNG y WebP en un PDF con orden, tamaño y orientación configurables.', en: 'Convert JPG, PNG and WebP images into a PDF with configurable order, size and orientation.' },
+    category: 'convertir', route: 'imagenes-a-pdf', icon: '🖼️', status: 'available',
+    keywords: ['imagenes a pdf', 'imagen a pdf', 'jpg a pdf', 'png a pdf', 'webp a pdf', 'images to pdf', 'pdf-lib'],
+    seo: { title: { es: 'Imágenes a PDF online gratis y privado', en: 'Images to PDF online for free and privately' }, description: { es: 'Convierte JPG, PNG y WebP a PDF directamente en tu navegador. Ordena imágenes, elige tamaño y orientación, y descarga un PDF sin subir archivos.', en: 'Convert JPG, PNG and WebP images to PDF directly in your browser. Reorder images, choose page size and orientation, and download a PDF without uploads.' } },
+  },
+  {
     id: 'test-pdf-generator',
     title: { es: 'Generar PDF de prueba', en: 'Generate test PDF' },
     description: { es: 'Crea PDFs de ejemplo con páginas, texto, imágenes, tamaños y metadatos configurables.', en: 'Create sample PDFs with configurable pages, text, images, sizes and metadata.' },

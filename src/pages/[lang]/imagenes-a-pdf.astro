@@ -1,0 +1,80 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ImagesToPdfTool from '../../components/ImagesToPdfTool.svelte';
+import { getLocalizedPath, isLang, type Lang } from '../../i18n/utils';
+import { locales } from '../../i18n/ui';
+
+export function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params;
+
+if (!isLang(lang)) {
+  return Astro.redirect(getLocalizedPath('es', 'imagenes-a-pdf'));
+}
+
+const copy = {
+  es: {
+    title: 'Imágenes a PDF online gratis y privado',
+    description: 'Convierte JPG, PNG y WebP a PDF directamente en tu navegador. Ordena imágenes, elige tamaño y orientación, y descarga un PDF sin subir archivos.',
+    badge: '100% privado · Sin subidas · En tu navegador',
+    h1: 'Imágenes a PDF online',
+    lead: 'Crea un PDF a partir de una o varias imágenes JPG, PNG o WebP. Puedes ordenar las miniaturas, elegir tamaño de página y orientación antes de generar el archivo.',
+    howTitle: 'Cómo convertir imágenes a PDF',
+    step1: 'Selecciona o arrastra imágenes JPG, PNG o WebP desde tu dispositivo.',
+    step2: 'Reordena las miniaturas y configura el tamaño de página: A4, carta o ajustar a imagen.',
+    step3: 'Genera el PDF en el navegador, revisa la vista previa y descárgalo.',
+    privacyTitle: 'Convertir imágenes a PDF sin subir archivos',
+    privacyText: 'La conversión se hace localmente con pdf-lib. Tus imágenes no se envían a servidores y solo existen en tu navegador mientras usas la herramienta.',
+    footer: 'Tus archivos se procesan localmente en tu navegador.',
+  },
+  en: {
+    title: 'Images to PDF online for free and privately',
+    description: 'Convert JPG, PNG and WebP images to PDF directly in your browser. Reorder images, choose page size and orientation, and download a PDF without uploads.',
+    badge: '100% private · No uploads · In your browser',
+    h1: 'Images to PDF online',
+    lead: 'Create a PDF from one or several JPG, PNG or WebP images. Reorder thumbnails and choose page size and orientation before generating the file.',
+    howTitle: 'How to convert images to PDF',
+    step1: 'Select or drag JPG, PNG or WebP images from your device.',
+    step2: 'Reorder thumbnails and configure the page size: A4, letter or fit to image.',
+    step3: 'Generate the PDF in the browser, review the preview and download it.',
+    privacyTitle: 'Convert images to PDF without uploads',
+    privacyText: 'The conversion runs locally with pdf-lib. Your images are not sent to servers and only exist in your browser while you use the tool.',
+    footer: 'Your files are processed locally in your browser.',
+  },
+} as const;
+
+const pageCopy = copy[lang as Lang];
+---
+
+<BaseLayout
+  lang={lang}
+  title={pageCopy.title}
+  description={pageCopy.description}
+  path="imagenes-a-pdf"
+>
+  <section class="hero">
+    <span class="badge">{pageCopy.badge}</span>
+    <h1>{pageCopy.h1}</h1>
+    <p class="lead">{pageCopy.lead}</p>
+  </section>
+
+  <ImagesToPdfTool client:load lang={lang} />
+
+  <section aria-labelledby="how-title">
+    <h2 id="how-title">{pageCopy.howTitle}</h2>
+    <ol>
+      <li>{pageCopy.step1}</li>
+      <li>{pageCopy.step2}</li>
+      <li>{pageCopy.step3}</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>{pageCopy.privacyTitle}</h2>
+    <p>{pageCopy.privacyText}</p>
+  </section>
+
+  <Fragment slot="footer">{pageCopy.footer}</Fragment>
+</BaseLayout>
