@@ -2,6 +2,7 @@
 import '../styles/design-system.css';
 import '../styles/design-system-overrides.css';
 import { getAlternateLinks, getLocalizedPath, type Lang } from '../i18n/utils';
+import TrustBadges from '../components/TrustBadges.astro';
 import { pdfToolCategories, pdfTools } from '../data/tools';
 
 interface Props {
@@ -24,6 +25,35 @@ const structuredData = {
 };
 const navTools = pdfTools.filter((tool) => ['merge-pdf', 'split-pdf', 'compress-pdf'].includes(tool.id));
 const convertTools = pdfTools.filter((tool) => tool.category === 'convertir').slice(0, 4);
+const footerTools = pdfTools.filter((tool) => tool.status === 'available').slice(0, 6);
+const footerLabels = {
+  es: {
+    tagline: 'Herramientas PDF rápidas, privadas y fáciles de usar desde el navegador.',
+    popularTools: 'Herramientas populares',
+    categories: 'Categorías',
+    project: 'Proyecto',
+    privacyTitle: 'Privacidad primero',
+    privacyText: 'Tus archivos se procesan localmente siempre que la herramienta lo permite. Sin instalaciones, sin subidas innecesarias y con control sobre tus documentos.',
+    allTools: 'Todas las herramientas',
+    privacy: 'Privacidad',
+    github: 'GitHub',
+    readme: 'README',
+    rights: 'Todos los derechos reservados.',
+  },
+  en: {
+    tagline: 'Fast, private and easy PDF tools that run in your browser.',
+    popularTools: 'Popular tools',
+    categories: 'Categories',
+    project: 'Project',
+    privacyTitle: 'Privacy first',
+    privacyText: 'Your files are processed locally whenever the tool supports it. No installs, no unnecessary uploads and full control over your documents.',
+    allTools: 'All tools',
+    privacy: 'Privacy',
+    github: 'GitHub',
+    readme: 'README',
+    rights: 'All rights reserved.',
+  },
+};
 const navLabels = {
   es: {
     allTools: 'Todas las herramientas PDF',
@@ -197,8 +227,49 @@ const navLabels = {
 
     <footer class="site-footer">
       <div class="site-footer__inner">
+        <section class="footer-brand" aria-label="FácilPDF">
+          <a class="brand footer-brand__logo" href={getLocalizedPath(lang)} aria-label={navLabels[lang].home}>
+            <span class="brand__mark" aria-hidden="true">PDF</span>
+            <strong>FácilPDF</strong>
+          </a>
+          <p>{footerLabels[lang].tagline}</p>
+          <TrustBadges lang={lang} ariaLabel={footerLabels[lang].privacyTitle} />
+        </section>
+
+        <nav class="footer-column" aria-label={footerLabels[lang].popularTools}>
+          <h2>{footerLabels[lang].popularTools}</h2>
+          {footerTools.map((tool) => (
+            <a href={getLocalizedPath(lang, tool.route)}>{tool.title[lang]}</a>
+          ))}
+        </nav>
+
+        <nav class="footer-column" aria-label={footerLabels[lang].categories}>
+          <h2>{footerLabels[lang].categories}</h2>
+          {pdfToolCategories.map((category) => (
+            <a href={getLocalizedPath(lang, `categoria/${category.id}`)}>{category.title[lang]}</a>
+          ))}
+        </nav>
+
+        <nav class="footer-column" aria-label={footerLabels[lang].project}>
+          <h2>{footerLabels[lang].project}</h2>
+          <a href={getLocalizedPath(lang)}>{footerLabels[lang].allTools}</a>
+          <a href={getLocalizedPath(lang, 'privacidad')}>{footerLabels[lang].privacy}</a>
+          <a href="https://github.com/jalonsomerchan/facilpdf" rel="noreferrer">{footerLabels[lang].github}</a>
+          <a href="https://github.com/jalonsomerchan/facilpdf#readme" rel="noreferrer">{footerLabels[lang].readme}</a>
+        </nav>
+
+        <section class="footer-privacy-card" aria-labelledby="footer-privacy-title">
+          <span aria-hidden="true">🔒</span>
+          <div>
+            <h2 id="footer-privacy-title">{footerLabels[lang].privacyTitle}</h2>
+            <p>{footerLabels[lang].privacyText}</p>
+          </div>
+        </section>
+      </div>
+
+      <div class="site-footer__bottom">
         <p><slot name="footer" /></p>
-        <a href={getLocalizedPath(lang, 'privacidad')}>{navLabels[lang].privacy}</a>
+        <p>© {new Date().getFullYear()} FácilPDF. {footerLabels[lang].rights}</p>
       </div>
     </footer>
 
@@ -536,6 +607,127 @@ const navLabels = {
         display: none;
       }
 
+      .site-footer {
+        width: min(var(--container-xl), calc(100% - (var(--pw-page-gutter) * 2)));
+        margin-inline: auto;
+        padding: clamp(2.5rem, 5vw, 4.5rem) 0 var(--space-8);
+        color: var(--color-text-muted);
+      }
+
+      .site-footer__inner {
+        display: grid;
+        grid-template-columns: minmax(18rem, 1.2fr) repeat(3, minmax(10rem, .7fr));
+        gap: clamp(1.5rem, 3vw, 2.5rem);
+        align-items: start;
+        padding: clamp(1.4rem, 3vw, 2rem);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-2xl);
+        background:
+          radial-gradient(circle at 8% 0%, color-mix(in srgb, var(--color-primary) 10%, transparent), transparent 18rem),
+          var(--color-surface-raised);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .footer-brand {
+        display: grid;
+        gap: var(--space-4);
+      }
+
+      .footer-brand__logo {
+        width: fit-content;
+      }
+
+      .footer-brand p,
+      .footer-privacy-card p,
+      .site-footer__bottom p {
+        margin: 0;
+      }
+
+      .trust-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .55rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .trust-badges li {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        min-height: 2.25rem;
+        padding: .38rem .7rem;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-full);
+        background: var(--color-surface);
+        color: var(--color-text);
+        font-size: .82rem;
+        font-weight: 850;
+      }
+
+      .trust-badges--compact li {
+        min-height: 2rem;
+        padding: .3rem .6rem;
+        font-size: .78rem;
+      }
+
+      .footer-column {
+        display: grid;
+        gap: .55rem;
+      }
+
+      .footer-column h2,
+      .footer-privacy-card h2 {
+        margin: 0 0 .35rem;
+        color: var(--color-text);
+        font-size: .92rem;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+      }
+
+      .footer-column a {
+        width: fit-content;
+        color: var(--color-text-muted);
+        font-weight: 760;
+        text-decoration: none;
+        transition: color var(--transition-base), transform var(--transition-base);
+      }
+
+      .footer-column a:hover {
+        color: var(--color-primary);
+        transform: translateX(2px);
+      }
+
+      .footer-privacy-card {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: var(--space-3);
+        padding: var(--space-4);
+        border: 1px solid color-mix(in srgb, var(--color-success) 24%, var(--color-border));
+        border-radius: var(--radius-xl);
+        background: color-mix(in srgb, var(--color-success) 9%, var(--color-surface));
+      }
+
+      .footer-privacy-card > span {
+        display: grid;
+        width: 2.5rem;
+        height: 2.5rem;
+        place-items: center;
+        border-radius: var(--radius-md);
+        background: var(--color-surface);
+      }
+
+      .site-footer__bottom {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: var(--space-3);
+        padding-top: var(--space-5);
+        font-size: .9rem;
+      }
+
       @media (max-width: 1100px) {
         .site-header__inner {
           grid-template-columns: auto 1fr auto;
@@ -553,6 +745,14 @@ const navLabels = {
         .nav-dropdown summary {
           padding-inline: .55rem;
           font-size: .9rem;
+        }
+
+        .site-footer__inner {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .footer-brand {
+          grid-column: 1 / -1;
         }
       }
 
@@ -689,6 +889,25 @@ const navLabels = {
           min-height: 2.35rem;
           padding-inline: .75rem;
           border-radius: calc(var(--radius-md) - .25rem);
+        }
+      }
+
+      @media (max-width: 640px) {
+        .site-footer__inner {
+          grid-template-columns: 1fr;
+          padding: var(--space-4);
+        }
+
+        .footer-brand {
+          grid-column: auto;
+        }
+
+        .footer-privacy-card {
+          grid-template-columns: 1fr;
+        }
+
+        .site-footer__bottom {
+          flex-direction: column;
         }
       }
 
