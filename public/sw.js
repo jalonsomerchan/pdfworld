@@ -3,6 +3,7 @@ const APP_SHELL = [
   '/',
   '/es',
   '/en',
+  '/offline.html',
   '/manifest.webmanifest',
   '/favicon.svg',
   '/pwa-icon.svg',
@@ -43,7 +44,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_VERSION).then((cache) => cache.put(request, copy));
           return response;
         })
-        .catch(() => caches.match(request).then((cached) => cached || caches.match('/es'))),
+        .catch(() => caches.match(request).then((cached) => cached || caches.match('/offline.html'))),
     );
     return;
   }
