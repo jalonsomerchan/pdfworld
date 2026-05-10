@@ -176,6 +176,17 @@ export const pdfTools = [
     seo: { title: { es: 'Comprimir PDF online privado', en: 'Compress PDF online privately' }, description: { es: 'Comprime PDF directamente en tu navegador con una estrategia local basada en pdf.js y pdf-lib, sin subir archivos.', en: 'Compress PDFs directly in your browser with a local strategy based on pdf.js and pdf-lib, without uploads.' } },
   },
   {
+    id: 'extract-text-pdf',
+    title: { es: 'Extraer texto PDF', en: 'Extract PDF text' },
+    description: { es: 'Extrae el texto seleccionable de un PDF, cópialo o descárgalo como TXT.', en: 'Extract selectable text from a PDF, copy it or download it as TXT.' },
+    category: 'utilidad', route: 'extraer-texto-pdf', icon: '📝', status: 'available',
+    keywords: ['extraer texto pdf', 'pdf a txt', 'texto seleccionable pdf', 'extract pdf text', 'pdf to text', 'pdf.js'],
+    seo: {
+      title: { es: 'Extraer texto de PDF online gratis y privado', en: 'Extract PDF text online for free and privately' },
+      description: { es: 'Extrae texto seleccionable de documentos PDF directamente en tu navegador, sin subir archivos y sin OCR.', en: 'Extract selectable text from PDF documents directly in your browser, without uploads and without OCR.' },
+    },
+  },
+  {
     id: 'scan-pdf',
     title: { es: 'Escanear PDF', en: 'Scan PDF' },
     description: { es: 'Escanea páginas con la cámara del móvil y crea un PDF listo para descargar o editar.', en: 'Scan pages with your mobile camera and create a PDF ready to download or edit.' },
