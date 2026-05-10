@@ -1,0 +1,44 @@
+{
+  "name": "FácilPDF",
+  "short_name": "FácilPDF",
+  "description": "Herramientas PDF privadas que funcionan en el navegador.",
+  "start_url": "/es",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#f0523d",
+  "orientation": "portrait-primary",
+  "categories": ["productivity", "utilities"],
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/pwa-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Unir PDF",
+      "short_name": "Unir",
+      "description": "Combina varios PDF en uno solo.",
+      "url": "/es/unir-pdf",
+      "icons": [{ "src": "/pwa-icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Dividir PDF",
+      "short_name": "Dividir",
+      "description": "Extrae páginas o rangos de un PDF.",
+      "url": "/es/dividir-pdf",
+      "icons": [{ "src": "/pwa-icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Comprimir PDF",
+      "short_name": "Comprimir",
+      "description": "Reduce el tamaño de un PDF en el navegador.",
+      "url": "/es/comprimir-pdf",
+      "icons": [{ "src": "/pwa-icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    }
+  ]
+}
