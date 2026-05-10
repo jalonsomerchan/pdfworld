@@ -1,0 +1,75 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import WatermarkPdfTool from '../../components/WatermarkPdfTool.svelte';
+import { getLocalizedPath, isLang, type Lang } from '../../i18n/utils';
+import { locales } from '../../i18n/ui';
+
+export function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params;
+
+if (!isLang(lang)) {
+  return Astro.redirect(getLocalizedPath('es', 'marca-de-agua-pdf'));
+}
+
+const copy = {
+  es: {
+    title: 'Añadir marca de agua a PDF online gratis y privado',
+    description: 'Añade una marca de agua de texto a todas o algunas páginas de un PDF desde el navegador, sin subir archivos a servidores.',
+    badge: '100% privado · Sin subidas · En tu navegador',
+    h1: 'Añadir marca de agua a PDF',
+    lead: 'Carga un PDF, escribe el texto de la marca de agua, ajusta tamaño, opacidad, rotación, posición y páginas afectadas, y descarga una copia nueva.',
+    howTitle: 'Cómo añadir una marca de agua a un PDF',
+    step1: 'Selecciona un archivo PDF desde tu dispositivo.',
+    step2: 'Configura el texto, tamaño, opacidad, rotación, posición y rango de páginas.',
+    step3: 'Genera la vista previa y descarga el PDF con la marca de agua aplicada.',
+    privacyTitle: 'Marca de agua PDF sin subir archivos',
+    privacyText: 'La edición se realiza en el navegador con pdf-lib. El documento original no se modifica ni se envía a ningún servidor.',
+    footer: 'Tus archivos se procesan localmente en tu navegador.',
+  },
+  en: {
+    title: 'Add watermark to PDF online for free and privately',
+    description: 'Add a text watermark to all or selected PDF pages from the browser, without uploading files to servers.',
+    badge: '100% private · No uploads · In your browser',
+    h1: 'Add watermark to PDF',
+    lead: 'Load a PDF, type the watermark text, adjust size, opacity, rotation, position and affected pages, then download a new copy.',
+    howTitle: 'How to add a watermark to a PDF',
+    step1: 'Select a PDF file from your device.',
+    step2: 'Configure text, size, opacity, rotation, position and page range.',
+    step3: 'Generate the preview and download the PDF with the watermark applied.',
+    privacyTitle: 'Watermark PDF without uploads',
+    privacyText: 'The edit is performed in the browser with pdf-lib. The original document is not changed and is never sent to a server.',
+    footer: 'Your files are processed locally in your browser.',
+  },
+} as const;
+
+const pageCopy = copy[lang as Lang];
+---
+
+<BaseLayout lang={lang} title={pageCopy.title} description={pageCopy.description} path="marca-de-agua-pdf">
+  <section class="hero">
+    <span class="badge">{pageCopy.badge}</span>
+    <h1>{pageCopy.h1}</h1>
+    <p class="lead">{pageCopy.lead}</p>
+  </section>
+
+  <WatermarkPdfTool client:load lang={lang} />
+
+  <section aria-labelledby="how-title">
+    <h2 id="how-title">{pageCopy.howTitle}</h2>
+    <ol>
+      <li>{pageCopy.step1}</li>
+      <li>{pageCopy.step2}</li>
+      <li>{pageCopy.step3}</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>{pageCopy.privacyTitle}</h2>
+    <p>{pageCopy.privacyText}</p>
+  </section>
+
+  <Fragment slot="footer">{pageCopy.footer}</Fragment>
+</BaseLayout>

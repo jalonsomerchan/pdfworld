@@ -23,16 +23,35 @@ const allLabel = currentLang === 'es' ? 'Todos' : 'All';
 const toolsCountLabel = currentLang === 'es' ? 'herramientas' : 'tools';
 const openToolLabel = currentLang === 'es' ? 'Abrir herramienta' : 'Open tool';
 const soonLabel = currentLang === 'es' ? 'Ver ficha' : 'View page';
-const heroEyebrow = currentLang === 'es' ? 'Herramientas PDF online' : 'Online PDF tools';
 const heroTitle = currentLang === 'es'
   ? 'Herramientas online para los amantes de la privacidad'
   : 'Online tools for privacy lovers';
 const heroLead = currentLang === 'es'
   ? 'Herramientas online y gratuitas para unir PDF, separar PDF, comprimir PDF, convertir imágenes y organizar documentos. Sin instalación y con procesamiento local siempre que sea posible.'
   : 'Free online tools to merge PDF, split PDF, compress PDF, convert images and organize documents. No installation and local processing whenever possible.';
-const privacyText = currentLang === 'es'
-  ? 'Privacidad primero: los archivos se procesan en tu navegador cuando la herramienta lo permite.'
-  : 'Privacy first: files are processed in your browser when the tool supports it.';
+const multitool = pdfTools.find((tool) => tool.id === 'pdf-multitool');
+const multitoolHref = getLocalizedPath(currentLang, multitool?.route ?? 'multiherramienta-pdf');
+const multitoolCopy = currentLang === 'es'
+  ? {
+      eyebrow: 'Herramienta principal',
+      title: 'Empieza con la multiherramienta PDF',
+      text: 'Una sola pantalla para unir, reordenar, rotar, eliminar páginas, extraer una selección y añadir texto visible a tus PDFs.',
+      cta: 'Abrir multiherramienta',
+      badge1: 'Unir PDF',
+      badge2: 'Rotar y ordenar',
+      badge3: 'Eliminar páginas',
+      badge4: 'Extraer selección',
+    }
+  : {
+      eyebrow: 'Main tool',
+      title: 'Start with the PDF multitool',
+      text: 'One screen to merge, reorder, rotate, delete pages, extract a selection and add visible text to your PDFs.',
+      cta: 'Open multitool',
+      badge1: 'Merge PDF',
+      badge2: 'Rotate and reorder',
+      badge3: 'Delete pages',
+      badge4: 'Extract selection',
+    };
 ---
 
 <BaseLayout
@@ -43,11 +62,29 @@ const privacyText = currentLang === 'es'
   <section class="home-hero" aria-labelledby="home-title">
     <h1 id="home-title">{heroTitle}</h1>
     <p class="home-hero__lead">{heroLead}</p>
+  </section>
 
+  <section class="featured-multitool" aria-labelledby="featured-multitool-title">
+    <div class="featured-multitool__content">
+      <span class="featured-multitool__eyebrow">{multitoolCopy.eyebrow}</span>
+      <h2 id="featured-multitool-title">{multitoolCopy.title}</h2>
+      <p>{multitoolCopy.text}</p>
+      <div class="featured-multitool__badges" aria-label="Funciones incluidas">
+        <span>{multitoolCopy.badge1}</span>
+        <span>{multitoolCopy.badge2}</span>
+        <span>{multitoolCopy.badge3}</span>
+        <span>{multitoolCopy.badge4}</span>
+      </div>
+      <a class="featured-multitool__cta" href={multitoolHref}>{multitoolCopy.cta}</a>
+    </div>
+    <div class="featured-multitool__visual" aria-hidden="true">
+      <span>🧩</span>
+      <strong>PDF</strong>
+      <small>All in one</small>
+    </div>
   </section>
 
   <section class="tools-catalog" aria-labelledby="tools-title">
-
     <div class="tool-filters" role="group" aria-label={filterLabel}>
       <button class="tool-filter is-active" type="button" data-tool-filter="all" aria-pressed="true">
         {allLabel}
@@ -68,7 +105,7 @@ const privacyText = currentLang === 'es'
 
         return (
           <a
-            class:list={['home-tool-card', `home-tool-card--${tool.category}`, { 'home-tool-card--disabled': !isAvailable }]}
+            class:list={['home-tool-card', `home-tool-card--${tool.category}`, { 'home-tool-card--disabled': !isAvailable, 'home-tool-card--featured': tool.id === 'pdf-multitool' }]}
             href={href}
             data-tool-card
             data-tool-category={tool.category}
@@ -130,6 +167,136 @@ const privacyText = currentLang === 'es'
       });
     });
   </script>
+
+  <style>
+    .featured-multitool {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: clamp(1.2rem, 3vw, 2rem);
+      align-items: center;
+      margin: clamp(1.5rem, 4vw, 3rem) 0;
+      padding: clamp(1.4rem, 4vw, 2.4rem);
+      border: 1px solid var(--color-border, #e2e8f0);
+      border-radius: var(--radius-2xl, 1.5rem);
+      background:
+        radial-gradient(circle at 10% 0%, color-mix(in srgb, var(--color-primary, #2563eb) 16%, transparent), transparent 18rem),
+        linear-gradient(135deg, var(--color-surface-raised, #fff), var(--color-surface-soft, #f1f5f9));
+      box-shadow: var(--shadow-md, 0 18px 48px rgb(15 23 42 / .12));
+    }
+
+    .featured-multitool__content {
+      display: grid;
+      gap: .85rem;
+    }
+
+    .featured-multitool__eyebrow {
+      width: fit-content;
+      padding: .35rem .7rem;
+      border-radius: 999px;
+      background: var(--color-primary-soft, #dbeafe);
+      color: var(--color-primary, #2563eb);
+      font-size: .78rem;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .featured-multitool h2,
+    .featured-multitool p {
+      margin: 0;
+    }
+
+    .featured-multitool h2 {
+      color: var(--color-text, #0f172a);
+      font-size: clamp(1.7rem, 4vw, 3rem);
+      line-height: .98;
+      letter-spacing: -.055em;
+    }
+
+    .featured-multitool p {
+      max-width: 48rem;
+      color: var(--color-text-muted, #475569);
+      font-size: clamp(1rem, 1.8vw, 1.18rem);
+    }
+
+    .featured-multitool__badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .55rem;
+    }
+
+    .featured-multitool__badges span {
+      padding: .42rem .75rem;
+      border: 1px solid var(--color-border, #e2e8f0);
+      border-radius: 999px;
+      background: var(--color-surface, #fff);
+      color: var(--color-text, #0f172a);
+      font-weight: 850;
+      font-size: .88rem;
+    }
+
+    .featured-multitool__cta {
+      display: inline-flex;
+      width: fit-content;
+      min-height: 3rem;
+      align-items: center;
+      justify-content: center;
+      padding: .85rem 1.2rem;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--color-primary, #2563eb), var(--color-secondary, #7c3aed));
+      color: #fff;
+      font-weight: 950;
+      text-decoration: none;
+      box-shadow: var(--shadow-sm, 0 4px 12px rgb(15 23 42 / .08));
+    }
+
+    .featured-multitool__visual {
+      display: grid;
+      width: clamp(8rem, 18vw, 13rem);
+      aspect-ratio: 1;
+      place-items: center;
+      border-radius: 2rem;
+      background: var(--color-surface, #fff);
+      box-shadow: var(--shadow-lg, 0 24px 70px rgb(15 23 42 / .18));
+      transform: rotate(3deg);
+    }
+
+    .featured-multitool__visual span {
+      font-size: clamp(2.5rem, 7vw, 4.5rem);
+    }
+
+    .featured-multitool__visual strong {
+      font-size: clamp(1.5rem, 4vw, 2.6rem);
+      line-height: 1;
+    }
+
+    .featured-multitool__visual small {
+      color: var(--color-text-muted, #475569);
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .home-tool-card--featured {
+      border-color: color-mix(in srgb, var(--color-primary, #2563eb) 45%, var(--color-border, #e2e8f0));
+      box-shadow: 0 18px 48px rgb(37 99 235 / .16);
+    }
+
+    @media (max-width: 760px) {
+      .featured-multitool {
+        grid-template-columns: 1fr;
+      }
+
+      .featured-multitool__visual {
+        width: min(100%, 12rem);
+        justify-self: start;
+      }
+
+      .featured-multitool__cta {
+        width: 100%;
+      }
+    }
+  </style>
 
   <Fragment slot="footer">{t('footer.privacy')}</Fragment>
 </BaseLayout>
