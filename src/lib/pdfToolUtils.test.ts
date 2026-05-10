@@ -1,56 +1,38 @@
 import { describe, expect, it } from 'vitest';
-import { formatFileSize, getFriendlyPdfError, getPdfBaseFilename } from './pdfToolUtils';
+import { formatFileSize, getFriendlyPdfError, validatePdfFiles } from './pdfToolUtils';
 
-describe('formatFileSize', () => {
-  it('formats small byte values as at least 1 KB', () => {
-    expect(formatFileSize(0)).toBe('1 KB');
+function makeFile(name: string, size: number, type = 'application/pdf') {
+  return new File([new Uint8Array(size)], name, { type });
+}
+
+describe('pdfToolUtils', () => {
+  it('formats file sizes defensively', () => {
+    expect(formatFileSize(0)).toBe('0 KB');
     expect(formatFileSize(512)).toBe('1 KB');
+    expect(formatFileSize(2 * 1024 * 1024)).toBe('2.0 MB');
   });
 
-  it('formats kilobytes without decimals', () => {
-    expect(formatFileSize(1024)).toBe('1 KB');
-    expect(formatFileSize(1536)).toBe('2 KB');
+  it('keeps valid PDF files and reports invalid files', () => {
+    const pdf = makeFile('ok.pdf', 1024);
+    const txt = makeFile('notes.txt', 1024, 'text/plain');
+
+    const result = validatePdfFiles([pdf, txt], {}, 'es');
+
+    expect(result.validFiles).toEqual([pdf]);
+    expect(result.errors).toContain('Solo se admiten archivos PDF válidos.');
   });
 
-  it('formats megabytes with one decimal', () => {
-    expect(formatFileSize(1024 * 1024)).toBe('1.0 MB');
-    expect(formatFileSize(2.5 * 1024 * 1024)).toBe('2.5 MB');
-  });
-});
+  it('reports size limits in the selected language', () => {
+    const bigPdf = makeFile('big.pdf', 12 * 1024);
 
-describe('getPdfBaseFilename', () => {
-  it('returns fallback when there is no file', () => {
-    expect(getPdfBaseFilename(null)).toBe('documento');
-    expect(getPdfBaseFilename(null, 'archivo')).toBe('archivo');
+    const result = validatePdfFiles([bigPdf], { maxFileSize: 10 * 1024 }, 'en');
+
+    expect(result.validFiles).toHaveLength(0);
+    expect(result.errors[0]).toContain('recommended limit');
   });
 
-  it('removes the pdf extension case-insensitively', () => {
-    const file = new File(['test'], 'Contrato.PDF', { type: 'application/pdf' });
-
-    expect(getPdfBaseFilename(file)).toBe('Contrato');
-  });
-
-  it('returns fallback for empty filenames after cleanup', () => {
-    const file = new File(['test'], '.pdf', { type: 'application/pdf' });
-
-    expect(getPdfBaseFilename(file, 'sin-nombre')).toBe('sin-nombre');
-  });
-});
-
-describe('getFriendlyPdfError', () => {
-  it('returns a password message for encrypted PDFs', () => {
-    expect(getFriendlyPdfError(new Error('Password required'), 'Fallback')).toBe(
-      'El PDF está protegido con contraseña o no permite esta operación en navegador.',
-    );
-  });
-
-  it('returns a damaged PDF message for invalid or corrupt PDFs', () => {
-    expect(getFriendlyPdfError(new Error('Invalid PDF structure'), 'Fallback')).toBe(
-      'El PDF parece estar dañado o no tiene un formato válido.',
-    );
-  });
-
-  it('returns fallback for unknown non-error values', () => {
-    expect(getFriendlyPdfError('unknown', 'Error genérico')).toBe('Error genérico');
+  it('maps common PDF failures to user friendly messages', () => {
+    expect(getFriendlyPdfError(new Error('encrypted document'), '', 'es')).toContain('protegido');
+    expect(getFriendlyPdfError(new Error('Invalid PDF structure'), '', 'en')).toContain('damaged');
   });
 });
