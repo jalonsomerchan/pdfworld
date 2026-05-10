@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import MultiPdfTool from '../../components/MultiPdfTool.svelte';
+import MultiPdfToolImproved from '../../components/MultiPdfToolImproved.svelte';
 import { getLocalizedPath, isLang, type Lang } from '../../i18n/utils';
 import { locales } from '../../i18n/ui';
 
@@ -25,14 +25,14 @@ const copy = {
       'Una sola pantalla para las operaciones más importantes: unir varios PDF, mover páginas, eliminar páginas, rotarlas, extraer una selección y añadir texto visual antes de descargar una copia nueva.',
     howTitle: 'Qué puedes hacer con la multiherramienta',
     step1: 'Sube uno o varios PDFs. La herramienta los carga y prepara sus páginas localmente en tu navegador.',
-    step2: 'Reordena PDFs completos o páginas individuales, elimina las que no necesites, rota páginas y marca páginas seleccionadas para extraerlas.',
-    step3: 'Elige si descargar todas las páginas conservadas o solo las seleccionadas, añade texto si lo necesitas y genera el nuevo PDF.',
+    step2: 'Arrastra las miniaturas para cambiar el orden, usa los iconos para rotar o eliminar páginas, y deja seleccionadas las que quieras exportar.',
+    step3: 'Elige si descargar todo o solo la selección, añade texto si lo necesitas y genera el nuevo PDF.',
     privacyTitle: 'Una herramienta central sin subir tus archivos',
     privacyText:
       'La multiherramienta trabaja con pdf-lib y pdf.js en el navegador. Los documentos no se envían a un servidor y el PDF generado se crea localmente en tu dispositivo.',
     limitsTitle: 'Primera versión funcional y ampliable',
     limitsText:
-      'Esta versión cubre unir, reordenar, rotar, eliminar, dividir por selección y añadir texto visible. Funciones más avanzadas como edición de contenido interno, firmas digitales criptográficas o protección con contraseña se añadirán como módulos específicos cuando sean fiables en frontend.',
+      'Esta versión cubre unir, reordenar con drag and drop, rotar, eliminar, dividir por selección y añadir texto visible. Funciones más avanzadas como edición de contenido interno, firmas digitales criptográficas o protección con contraseña se añadirán como módulos específicos cuando sean fiables en frontend.',
     footer: 'Tus archivos se procesan localmente en tu navegador.',
   },
   en: {
@@ -45,14 +45,14 @@ const copy = {
       'One screen for the most important operations: merge PDFs, move pages, delete pages, rotate them, extract a selection and add visible text before downloading a new copy.',
     howTitle: 'What you can do with the multitool',
     step1: 'Upload one or more PDFs. The tool loads and prepares their pages locally in your browser.',
-    step2: 'Reorder whole PDFs or individual pages, delete what you do not need, rotate pages and mark selected pages for extraction.',
-    step3: 'Choose whether to download all kept pages or selected pages only, add text if needed and generate the new PDF.',
+    step2: 'Drag thumbnails to reorder, use icons to rotate or delete pages, and keep selected the pages you want to export.',
+    step3: 'Choose whether to download everything or only the selection, add text if needed and generate the new PDF.',
     privacyTitle: 'A central tool without uploading your files',
     privacyText:
       'The multitool works with pdf-lib and pdf.js in the browser. Documents are not sent to a server and the generated PDF is created locally on your device.',
     limitsTitle: 'Functional and extensible first version',
     limitsText:
-      'This version covers merge, reorder, rotate, delete, split by selection and visible text insertion. More advanced features such as internal content editing, cryptographic digital signatures or password protection will be added as specific modules when they are reliable on the frontend.',
+      'This version covers merge, drag and drop reorder, rotate, delete, split by selection and visible text insertion. More advanced features such as internal content editing, cryptographic digital signatures or password protection will be added as specific modules when they are reliable on the frontend.',
     footer: 'Your files are processed locally in your browser.',
   },
 } as const;
@@ -72,7 +72,7 @@ const pageCopy = copy[lang as Lang];
     <p class="lead">{pageCopy.lead}</p>
   </section>
 
-  <MultiPdfTool client:load lang={lang} />
+  <MultiPdfToolImproved client:load lang={lang} />
 
   <section aria-labelledby="how-title">
     <h2 id="how-title">{pageCopy.howTitle}</h2>
