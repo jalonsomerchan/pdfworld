@@ -10,10 +10,7 @@ export interface PdfToolCategory {
   title: LocalizedText;
   description: LocalizedText;
   icon: string;
-  seo: {
-    title: LocalizedText;
-    description: LocalizedText;
-  };
+  seo: { title: LocalizedText; description: LocalizedText };
 }
 
 export interface PdfTool {
@@ -25,10 +22,7 @@ export interface PdfTool {
   icon: string;
   status: ToolStatus;
   keywords: string[];
-  seo: {
-    title: LocalizedText;
-    description: LocalizedText;
-  };
+  seo: { title: LocalizedText; description: LocalizedText };
 }
 
 export const toolStatusLabels: Record<ToolStatus, LocalizedText> = {
@@ -41,68 +35,44 @@ export const pdfToolCategories = [
   {
     id: 'organizar',
     title: { es: 'Organizar PDF', en: 'Organize PDF' },
-    description: {
-      es: 'Une, divide, rota, reordena y elimina páginas de documentos PDF sin subirlos a ningún servidor.',
-      en: 'Merge, split, rotate, reorder and delete pages from PDF documents without uploading them to any server.',
-    },
+    description: { es: 'Une, divide, rota, reordena y elimina páginas de documentos PDF sin subirlos a ningún servidor.', en: 'Merge, split, rotate, reorder and delete pages from PDF documents without uploading them to any server.' },
     icon: '🗂️',
-    seo: {
-      title: { es: 'Herramientas para organizar PDF online y privado', en: 'Private online tools to organize PDF files' },
-      description: {
-        es: 'Herramientas frontend para unir, dividir, rotar, ordenar y eliminar páginas PDF directamente en tu navegador.',
-        en: 'Frontend tools to merge, split, rotate, arrange and delete PDF pages directly in your browser.',
-      },
-    },
+    seo: { title: { es: 'Herramientas para organizar PDF online y privado', en: 'Private online tools to organize PDF files' }, description: { es: 'Herramientas frontend para unir, dividir, rotar, ordenar y eliminar páginas PDF directamente en tu navegador.', en: 'Frontend tools to merge, split, rotate, arrange and delete PDF pages directly in your browser.' } },
   },
   {
     id: 'convertir',
     title: { es: 'Convertir PDF', en: 'Convert PDF' },
     description: { es: 'Convierte imágenes y documentos a PDF o extrae formatos comunes desde tus archivos.', en: 'Convert images and documents to PDF or export common formats from your files.' },
     icon: '🔁',
-    seo: {
-      title: { es: 'Convertidores PDF online en el navegador', en: 'Browser-based online PDF converters' },
-      description: { es: 'Convierte PDF, JPG y otros formatos con herramientas que funcionan en el frontend.', en: 'Convert PDF, JPG and other formats with tools that run on the frontend.' },
-    },
+    seo: { title: { es: 'Convertidores PDF online en el navegador', en: 'Browser-based online PDF converters' }, description: { es: 'Convierte PDF, JPG y otros formatos con herramientas que funcionan en el frontend.', en: 'Convert PDF, JPG and other formats with tools that run on the frontend.' } },
   },
   {
     id: 'optimizar',
     title: { es: 'Optimizar PDF', en: 'Optimize PDF' },
     description: { es: 'Reduce peso, mejora archivos y prepara documentos PDF para compartirlos mejor.', en: 'Reduce file size, improve files and prepare PDF documents for easier sharing.' },
     icon: '⚡',
-    seo: {
-      title: { es: 'Herramientas para optimizar PDF online', en: 'Online tools to optimize PDF files' },
-      description: { es: 'Comprime, repara y optimiza PDF desde el navegador manteniendo la privacidad.', en: 'Compress, repair and optimize PDF files in the browser while keeping them private.' },
-    },
+    seo: { title: { es: 'Herramientas para optimizar PDF online', en: 'Online tools to optimize PDF files' }, description: { es: 'Comprime, repara y optimiza PDF desde el navegador manteniendo la privacidad.', en: 'Compress, repair and optimize PDF files in the browser while keeping them private.' } },
   },
   {
     id: 'seguridad',
     title: { es: 'Seguridad PDF', en: 'PDF security' },
     description: { es: 'Protege, desbloquea y revisa documentos PDF manteniendo el control de tus archivos.', en: 'Protect, unlock and review PDF documents while keeping control of your files.' },
     icon: '🔐',
-    seo: {
-      title: { es: 'Herramientas de seguridad PDF privadas', en: 'Private PDF security tools' },
-      description: { es: 'Opciones para proteger y gestionar la seguridad de PDFs directamente en el navegador.', en: 'Options to protect and manage PDF security directly in the browser.' },
-    },
+    seo: { title: { es: 'Herramientas de seguridad PDF privadas', en: 'Private PDF security tools' }, description: { es: 'Opciones para proteger y gestionar la seguridad de PDFs directamente en el navegador.', en: 'Options to protect and manage PDF security directly in the browser.' } },
   },
   {
     id: 'edicion',
     title: { es: 'Editar PDF', en: 'Edit PDF' },
     description: { es: 'Edita metadatos, numera páginas y prepara pequeñas modificaciones de documentos PDF.', en: 'Edit metadata, number pages and prepare small changes to PDF documents.' },
     icon: '✏️',
-    seo: {
-      title: { es: 'Herramientas para editar PDF en el navegador', en: 'Browser-based PDF editing tools' },
-      description: { es: 'Edita información y detalles de tus PDFs con utilidades 100% frontend.', en: 'Edit information and details in your PDFs with 100% frontend utilities.' },
-    },
+    seo: { title: { es: 'Herramientas para editar PDF en el navegador', en: 'Browser-based PDF editing tools' }, description: { es: 'Edita información y detalles de tus PDFs con utilidades 100% frontend.', en: 'Edit information and details in your PDFs with 100% frontend utilities.' } },
   },
   {
     id: 'utilidad',
     title: { es: 'Utilidades PDF', en: 'PDF utilities' },
     description: { es: 'Herramientas auxiliares para revisar, limpiar y preparar archivos PDF.', en: 'Helper tools to review, clean and prepare PDF files.' },
     icon: '🧰',
-    seo: {
-      title: { es: 'Utilidades PDF online privadas', en: 'Private online PDF utilities' },
-      description: { es: 'Utilidades PDF simples, privadas y ejecutadas directamente en el navegador.', en: 'Simple, private PDF utilities that run directly in the browser.' },
-    },
+    seo: { title: { es: 'Utilidades PDF online privadas', en: 'Private online PDF utilities' }, description: { es: 'Utilidades PDF simples, privadas y ejecutadas directamente en el navegador.', en: 'Simple, private PDF utilities that run directly in the browser.' } },
   },
 ] as const satisfies PdfToolCategory[];
 
@@ -110,19 +80,10 @@ export const pdfTools = [
   {
     id: 'pdf-multitool',
     title: { es: 'Multiherramienta PDF', en: 'PDF multitool' },
-    description: {
-      es: 'Une, reordena, rota, elimina, divide por selección y añade texto visible desde una sola herramienta.',
-      en: 'Merge, reorder, rotate, delete, split by selection and add visible text from a single tool.',
-    },
+    description: { es: 'Une, reordena, rota, elimina, divide por selección y añade texto visible desde una sola herramienta.', en: 'Merge, reorder, rotate, delete, split by selection and add visible text from a single tool.' },
     category: 'organizar', route: 'multiherramienta-pdf', icon: '🧩', status: 'available',
     keywords: ['multiherramienta pdf', 'editor pdf', 'unir pdf', 'rotar pdf', 'eliminar paginas pdf', 'dividir pdf', 'añadir texto pdf', 'pdf multitool', 'pdf editor', 'pdf-lib', 'pdf.js'],
-    seo: {
-      title: { es: 'Multiherramienta PDF online gratis y privada', en: 'Free private online PDF multitool' },
-      description: {
-        es: 'Edita PDFs desde una sola pantalla: unir, reordenar, rotar, eliminar, dividir por selección y añadir texto visible sin subir archivos.',
-        en: 'Edit PDFs from one screen: merge, reorder, rotate, delete, split by selection and add visible text without uploads.',
-      },
-    },
+    seo: { title: { es: 'Multiherramienta PDF online gratis y privada', en: 'Free private online PDF multitool' }, description: { es: 'Edita PDFs desde una sola pantalla: unir, reordenar, rotar, eliminar, dividir por selección y añadir texto visible sin subir archivos.', en: 'Edit PDFs from one screen: merge, reorder, rotate, delete, split by selection and add visible text without uploads.' } },
   },
   {
     id: 'merge-pdf',
@@ -146,10 +107,7 @@ export const pdfTools = [
     description: { es: 'Quita páginas concretas o rangos de un PDF y descarga una copia limpia.', en: 'Remove specific pages or ranges from a PDF and download a clean copy.' },
     category: 'organizar', route: 'eliminar-paginas-pdf', icon: '🗑️', status: 'available',
     keywords: ['eliminar paginas pdf', 'borrar paginas pdf', 'quitar paginas pdf', 'delete pdf pages', 'remove pdf pages', 'pdf-lib'],
-    seo: {
-      title: { es: 'Eliminar páginas PDF online sin subir archivos', en: 'Delete PDF pages online without uploads' },
-      description: { es: 'Elimina páginas sueltas o rangos de un PDF directamente en tu navegador, sin subir documentos a servidores.', en: 'Delete individual pages or ranges from a PDF directly in your browser, without uploading documents to servers.' },
-    },
+    seo: { title: { es: 'Eliminar páginas PDF online sin subir archivos', en: 'Delete PDF pages online without uploads' }, description: { es: 'Elimina páginas sueltas o rangos de un PDF directamente en tu navegador, sin subir documentos a servidores.', en: 'Delete individual pages or ranges from a PDF directly in your browser, without uploading documents to servers.' } },
   },
   {
     id: 'split-pdf',
@@ -176,15 +134,20 @@ export const pdfTools = [
     seo: { title: { es: 'Comprimir PDF online privado', en: 'Compress PDF online privately' }, description: { es: 'Comprime PDF directamente en tu navegador con una estrategia local basada en pdf.js y pdf-lib, sin subir archivos.', en: 'Compress PDFs directly in your browser with a local strategy based on pdf.js and pdf-lib, without uploads.' } },
   },
   {
+    id: 'watermark-pdf',
+    title: { es: 'Marca de agua PDF', en: 'Watermark PDF' },
+    description: { es: 'Añade una marca de agua de texto con tamaño, opacidad, rotación, posición y rangos de páginas.', en: 'Add a text watermark with size, opacity, rotation, position and page range controls.' },
+    category: 'edicion', route: 'marca-de-agua-pdf', icon: '💧', status: 'available',
+    keywords: ['marca de agua pdf', 'añadir marca de agua pdf', 'watermark pdf', 'texto pdf', 'pdf-lib'],
+    seo: { title: { es: 'Añadir marca de agua a PDF online gratis y privado', en: 'Add watermark to PDF online for free and privately' }, description: { es: 'Añade texto como marca de agua a todas o algunas páginas de un PDF directamente en tu navegador, sin subir archivos.', en: 'Add text as a watermark to all or selected PDF pages directly in your browser, without uploading files.' } },
+  },
+  {
     id: 'extract-text-pdf',
     title: { es: 'Extraer texto PDF', en: 'Extract PDF text' },
     description: { es: 'Extrae el texto seleccionable de un PDF, cópialo o descárgalo como TXT.', en: 'Extract selectable text from a PDF, copy it or download it as TXT.' },
     category: 'utilidad', route: 'extraer-texto-pdf', icon: '📝', status: 'available',
     keywords: ['extraer texto pdf', 'pdf a txt', 'texto seleccionable pdf', 'extract pdf text', 'pdf to text', 'pdf.js'],
-    seo: {
-      title: { es: 'Extraer texto de PDF online gratis y privado', en: 'Extract PDF text online for free and privately' },
-      description: { es: 'Extrae texto seleccionable de documentos PDF directamente en tu navegador, sin subir archivos y sin OCR.', en: 'Extract selectable text from PDF documents directly in your browser, without uploads and without OCR.' },
-    },
+    seo: { title: { es: 'Extraer texto de PDF online gratis y privado', en: 'Extract PDF text online for free and privately' }, description: { es: 'Extrae texto seleccionable de documentos PDF directamente en tu navegador, sin subir archivos y sin OCR.', en: 'Extract selectable text from PDF documents directly in your browser, without uploads and without OCR.' } },
   },
   {
     id: 'scan-pdf',
