@@ -108,6 +108,23 @@ export const pdfToolCategories = [
 
 export const pdfTools = [
   {
+    id: 'pdf-multitool',
+    title: { es: 'Multiherramienta PDF', en: 'PDF multitool' },
+    description: {
+      es: 'Une, reordena, rota, elimina, divide por selección y añade texto visible desde una sola herramienta.',
+      en: 'Merge, reorder, rotate, delete, split by selection and add visible text from a single tool.',
+    },
+    category: 'organizar', route: 'multiherramienta-pdf', icon: '🧩', status: 'available',
+    keywords: ['multiherramienta pdf', 'editor pdf', 'unir pdf', 'rotar pdf', 'eliminar paginas pdf', 'dividir pdf', 'añadir texto pdf', 'pdf multitool', 'pdf editor', 'pdf-lib', 'pdf.js'],
+    seo: {
+      title: { es: 'Multiherramienta PDF online gratis y privada', en: 'Free private online PDF multitool' },
+      description: {
+        es: 'Edita PDFs desde una sola pantalla: unir, reordenar, rotar, eliminar, dividir por selección y añadir texto visible sin subir archivos.',
+        en: 'Edit PDFs from one screen: merge, reorder, rotate, delete, split by selection and add visible text without uploads.',
+      },
+    },
+  },
+  {
     id: 'merge-pdf',
     title: { es: 'Unir PDF', en: 'Merge PDF' },
     description: { es: 'Combina varios archivos PDF en uno solo sin perder privacidad.', en: 'Combine several PDF files into a single document without losing privacy.' },
