@@ -3,6 +3,7 @@
   import { PDFDocument, degrees } from 'pdf-lib';
   import PdfDropzone from './PdfDropzone.svelte';
   import PdfResultModal from './PdfResultModal.svelte';
+  import UploadedFilesList, { type UploadedFileItem } from './UploadedFilesList.svelte';
   import { createPdfObjectUrl, formatFileSize, yieldToBrowser } from '../lib/pdfToolUtils';
 
   type Lang = 'es' | 'en';
@@ -18,19 +19,21 @@
       title: 'Une PDF editando sus páginas', description: 'Carga varios PDF, arrastra páginas o PDFs completos, elimina páginas, rótalas y revisa el resultado antes de descargar.',
       dropTitle: 'Arrastra tus PDF aquí', dropText: 'Suelta los archivos o pulsa para seleccionarlos', dropActive: 'Suelta para añadirlos al editor', fileHelp: 'Solo PDF · privado · procesamiento local en navegador',
       selectedFiles: 'PDF cargados', pagesEditor: 'Editor de páginas', noFiles: 'Todavía no has seleccionado ningún PDF.', pages: 'páginas', finalPages: 'páginas finales',
-      dragHint: 'Arrastra las tarjetas para cambiar el orden final. También puedes arrastrar un PDF completo desde la columna izquierda.', removePdf: 'Eliminar PDF', rotateLeft: 'Girar izquierda', rotateRight: 'Girar derecha', removePage: 'Eliminar página',
+      dragHint: 'Arrastra las tarjetas para cambiar el orden final. También puedes reordenar los PDFs completos desde la lista de archivos.', removePdf: 'Eliminar PDF', rotateLeft: 'Girar izquierda', rotateRight: 'Girar derecha', removePage: 'Eliminar página',
       clear: 'Limpiar', generatePreview: 'Generar vista previa', generating: 'Generando PDF…', download: 'Descargar PDF', rendering: 'Generando miniaturas… puedes editar mientras tanto.', downloadName: 'FácilPDF-unido.pdf',
       invalidFiles: 'Algunos archivos no son PDF y se han ignorado.', readError: 'No se pudo leer este PDF. Puede estar dañado o protegido.', needPages: 'Añade al menos una página válida para generar el PDF.', mergeError: 'No se pudo generar el PDF. Revisa que los archivos no estén dañados o protegidos.', ready: 'PDF generado correctamente. Revisa la vista previa antes de descargar.',
       page: 'Página', from: 'de', previewTitle: 'Vista previa del PDF unido', closePreview: 'Cerrar vista previa', previewFallback: 'Tu navegador no puede mostrar la vista previa del PDF. Descárgalo para revisarlo.', dropHere: 'Soltar aquí',
+      filesSummary: 'PDF preparados', moveUp: 'Subir', moveDown: 'Bajar', fileReady: 'Listo',
     },
     en: {
       title: 'Merge PDFs by editing pages', description: 'Load several PDFs, drag pages or whole PDFs, delete pages, rotate them and preview the result before downloading.',
       dropTitle: 'Drag your PDFs here', dropText: 'Drop files or click to select them', dropActive: 'Drop to add them to the editor', fileHelp: 'PDF only · private · local browser processing',
       selectedFiles: 'Loaded PDFs', pagesEditor: 'Page editor', noFiles: 'No PDF files selected yet.', pages: 'pages', finalPages: 'final pages',
-      dragHint: 'Drag cards to change the final order. You can also drag a whole PDF from the left column.', removePdf: 'Remove PDF', rotateLeft: 'Rotate left', rotateRight: 'Rotate right', removePage: 'Delete page',
+      dragHint: 'Drag cards to change the final order. You can also reorder whole PDFs from the files list.', removePdf: 'Remove PDF', rotateLeft: 'Rotate left', rotateRight: 'Rotate right', removePage: 'Delete page',
       clear: 'Clear', generatePreview: 'Generate preview', generating: 'Generating PDF…', download: 'Download PDF', rendering: 'Generating thumbnails… you can edit meanwhile.', downloadName: 'FácilPDF-merged.pdf',
       invalidFiles: 'Some files were not PDFs and were ignored.', readError: 'This PDF could not be read. It may be damaged or protected.', needPages: 'Add at least one valid page to generate the PDF.', mergeError: 'The PDF could not be generated. Check that files are not damaged or protected.', ready: 'PDF created successfully. Review the preview before downloading.',
       page: 'Page', from: 'from', previewTitle: 'Merged PDF preview', closePreview: 'Close preview', previewFallback: 'Your browser cannot display the PDF preview. Download it to review it.', dropHere: 'Drop here',
+      filesSummary: 'PDF ready', moveUp: 'Move up', moveDown: 'Move down', fileReady: 'Ready',
     },
   } as const;
 
@@ -47,8 +50,6 @@
   let isPreviewOpen = false;
   let draggedPageId = '';
   let dragOverPageId = '';
-  let draggedSourceId = '';
-  let dragOverSourceId = '';
   let editorRegion: HTMLDivElement;
 
   $: t = labels[lang] ?? labels.es;
@@ -56,6 +57,14 @@
   $: canGenerate = pages.length > 0 && validSources.length > 0 && !isMerging;
   $: canDownload = Boolean(resultBytes && !isMerging);
   $: totalSourcePages = sources.reduce((sum, item) => sum + item.pageCount, 0);
+  $: uploadedFileItems = sources.map((source): UploadedFileItem => ({
+    id: source.id,
+    name: source.file.name,
+    size: `${formatFileSize(source.file.size)} · ${sourcePages(source.id) || source.pageCount} ${t.pages}`,
+    type: source.file.type || 'application/pdf',
+    status: source.error ? 'error' : 'ready',
+    statusLabel: source.error ?? t.fileReady,
+  }));
 
   async function loadPdfJs() {
     if (!pdfJsPromise) {
@@ -126,7 +135,7 @@
   function updatePage(pageId: string, patch: Partial<PageItem>) { pages = pages.map((item) => (item.id === pageId ? { ...item, ...patch } : item)); }
 
   function onPageDragStart(event: DragEvent, pageId: string) {
-    draggedPageId = pageId; draggedSourceId = ''; dragOverPageId = '';
+    draggedPageId = pageId; dragOverPageId = '';
     event.dataTransfer?.setData('text/plain', pageId);
     if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
   }
@@ -145,26 +154,18 @@
     pages = nextPages; clearResult(); statusMessage = '';
   }
 
-  function onSourceDragStart(event: DragEvent, sourceId: string) {
-    draggedSourceId = sourceId; draggedPageId = ''; dragOverSourceId = '';
-    event.dataTransfer?.setData('text/plain', sourceId);
-    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
-  }
-  function onSourceDragOver(event: DragEvent, sourceId: string) { event.preventDefault(); dragOverSourceId = sourceId; if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'; }
-  function onSourceDrop(event: DragEvent, targetSourceId: string) {
-    event.preventDefault();
-    const sourceId = draggedSourceId || event.dataTransfer?.getData('text/plain') || '';
-    draggedSourceId = ''; dragOverSourceId = '';
-    if (!sourceId || sourceId === targetSourceId) return;
+  function reorderSource(sourceId: string, direction: -1 | 1) {
     const fromIndex = sources.findIndex((item) => item.id === sourceId);
-    const toIndex = sources.findIndex((item) => item.id === targetSourceId);
-    if (fromIndex < 0 || toIndex < 0) return;
+    const toIndex = fromIndex + direction;
+    if (fromIndex < 0 || toIndex < 0 || toIndex >= sources.length) return;
+
     const nextSources = [...sources];
     const [source] = nextSources.splice(fromIndex, 1);
     nextSources.splice(toIndex, 0, source);
     sources = nextSources;
     pages = nextSources.flatMap((sourceItem) => pages.filter((page) => page.sourceId === sourceItem.id));
-    clearResult(); statusMessage = '';
+    clearResult();
+    statusMessage = '';
   }
 
   function rotatePage(pageId: string, delta: 90 | -90) { pages = pages.map((item) => item.id === pageId ? { ...item, rotation: normalizeRotation(item.rotation + delta) } : item); clearResult(); statusMessage = ''; }
@@ -230,12 +231,18 @@
     <div class="merge-pro__layout" bind:this={editorRegion}>
       <aside class="merge-pro__sources" aria-labelledby="sources-title">
         <div class="merge-pro__panel-head"><h3 id="sources-title">{t.selectedFiles}</h3><button type="button" class="merge-pro__secondary" on:click={clearFiles}>{t.clear}</button></div>
-        {#each sources as source (source.id)}
-          <article draggable="true" on:dragstart={(event) => onSourceDragStart(event, source.id)} on:dragover={(event) => onSourceDragOver(event, source.id)} on:drop={(event) => onSourceDrop(event, source.id)} on:dragend={() => (dragOverSourceId = '')} class:merge-pro__source={true} class:merge-pro__source--error={Boolean(source.error)} class:merge-pro__source--over={dragOverSourceId === source.id}>
-            <div class="merge-pro__source-main"><span class="merge-pro__drag-handle" aria-hidden="true">⋮⋮</span><span class="merge-pro__file-icon">PDF</span><div><strong>{source.file.name}</strong><p>{formatFileSize(source.file.size)} · {sourcePages(source.id) || source.pageCount} {t.pages}</p>{#if source.error}<p class="merge-pro__file-error">{source.error}</p>{/if}</div></div>
-            <div class="merge-pro__source-actions"><button type="button" on:click={() => removeSource(source.id)}>{t.removePdf}</button></div>
-          </article>
-        {/each}
+        <UploadedFilesList
+          files={uploadedFileItems}
+          title={t.selectedFiles}
+          summaryLabel={t.filesSummary}
+          removeLabel={t.removePdf}
+          moveUpLabel={t.moveUp}
+          moveDownLabel={t.moveDown}
+          reorderable={true}
+          onRemove={(file) => removeSource(file.id)}
+          onMoveUp={(file) => reorderSource(file.id, -1)}
+          onMoveDown={(file) => reorderSource(file.id, 1)}
+        />
         <button type="button" class="merge-pro__primary" disabled={!canGenerate} on:click={generatePreview}>{isMerging ? t.generating : t.generatePreview}</button>
         <button type="button" class="merge-pro__primary merge-pro__primary--dark" disabled={!canDownload} on:click={() => (isPreviewOpen = true)}>{t.download}</button>
       </aside>
@@ -269,5 +276,5 @@
 />
 
 <style>
-  .merge-pro{display:grid;gap:22px;margin:34px 0 56px;padding:clamp(18px,3vw,30px);border:1px solid #e2e8f0;border-radius:32px;background:radial-gradient(circle at top left,rgba(239,68,68,.12),transparent 34%),linear-gradient(135deg,rgba(255,255,255,.97),rgba(248,250,252,.9));box-shadow:0 30px 90px rgba(15,23,42,.11)}.merge-pro__hero{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}.merge-pro__hero h2,.merge-pro__panel-head h3,.merge-pro__pages h3{margin:0}.merge-pro__hero h2{font-size:clamp(1.65rem,3vw,2.25rem);letter-spacing:-.04em}.merge-pro__hero p,.merge-pro__empty,.merge-pro__source p,.merge-pro__pages-head p{margin:0;color:#64748b}.merge-pro__eyebrow{display:inline-flex;margin-bottom:8px;padding:5px 10px;border-radius:999px;background:rgba(239,68,68,.1);color:#b91c1c;font-size:.78rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.merge-pro__summary{display:grid;min-width:148px;gap:2px;padding:14px 16px;border:1px solid #e2e8f0;border-radius:22px;background:rgba(255,255,255,.78);text-align:right}.merge-pro__summary strong{font-size:1.9rem;line-height:1}.merge-pro__summary span,.merge-pro__summary small{color:#64748b;font-weight:800}.merge-pro__message,.merge-pro__empty{margin:0;padding:13px 15px;border-radius:16px;background:#f8fafc;font-weight:850}.merge-pro__message--error{background:#fff1f2;color:#991b1b}.merge-pro__message--success{background:#ecfdf5;color:#166534}.merge-pro__layout{display:grid;grid-template-columns:340px minmax(0,1fr);gap:20px;align-items:start}.merge-pro__sources{position:sticky;top:18px;display:grid;gap:12px}.merge-pro__panel-head{display:flex;justify-content:space-between;gap:10px;align-items:center}.merge-pro__source{display:grid;gap:12px;padding:14px;border:1px solid #e2e8f0;border-radius:20px;background:#fff;box-shadow:0 12px 34px rgba(15,23,42,.06);cursor:grab}.merge-pro__source:active,.merge-pro__page-card:active{cursor:grabbing}.merge-pro__source--over,.merge-pro__page-card--over{border-color:#ef4444!important;box-shadow:0 0 0 4px rgba(239,68,68,.12),0 18px 44px rgba(15,23,42,.12)!important}.merge-pro__source--error{border-color:#fecaca;background:#fff1f2}.merge-pro__source-main{display:flex;gap:10px;min-width:0;align-items:flex-start}.merge-pro__source-main strong,.merge-pro__page-file{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.merge-pro__source-main strong{max-width:220px}.merge-pro__drag-handle{color:#94a3b8;font-weight:950;line-height:1.1;padding-top:4px}.merge-pro__file-icon{display:grid;flex:0 0 auto;width:42px;height:48px;place-items:center;border-radius:12px;background:#fff1f2;color:#dc2626;font-size:.72rem;font-weight:950}.merge-pro__file-error{color:#991b1b!important}.merge-pro__source-actions,.merge-pro__page-actions{display:flex;flex-wrap:wrap;gap:8px}.merge-pro button{border:0;cursor:pointer;font:inherit;font-weight:850;transition:transform 140ms ease,opacity 140ms ease}.merge-pro__source-actions button,.merge-pro__secondary,.merge-pro__page-actions button{padding:8px 10px;border-radius:999px;background:#e2e8f0;color:#334155}.merge-pro__primary{width:100%;min-height:48px;padding:12px 16px;border-radius:999px;background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;box-shadow:0 16px 34px rgba(239,68,68,.28)}.merge-pro__primary--dark{background:linear-gradient(135deg,#0f172a,#334155);box-shadow:0 16px 34px rgba(15,23,42,.22)}.merge-pro button:hover:not(:disabled){transform:translateY(-1px)}.merge-pro button:disabled{cursor:not-allowed;opacity:.45}.merge-pro__pages{display:grid;gap:14px}.merge-pro__pages-head{display:grid;gap:4px}.merge-pro__page-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}.merge-pro__page-card{display:grid;gap:10px;padding:12px;border:2px solid #e2e8f0;border-radius:22px;background:#fff;box-shadow:0 12px 28px rgba(15,23,42,.06);cursor:grab}.merge-pro__thumb-frame{display:grid;min-height:190px;place-items:center;overflow:hidden;border:1px solid #e2e8f0;border-radius:16px;background:linear-gradient(135deg,#f8fafc,#fff1f2)}.merge-pro__thumb{display:grid;width:82%;place-items:center;transition:transform 180ms ease}.merge-pro__thumb img{display:block;width:100%;height:auto;box-shadow:0 12px 26px rgba(15,23,42,.16);pointer-events:none}.merge-pro__placeholder{display:grid;width:100%;min-height:138px;place-items:center;border-radius:12px;background:#f1f5f9;color:#94a3b8;font-size:1.35rem;font-weight:950}.merge-pro__placeholder--loading{background:linear-gradient(100deg,#f1f5f9 20%,#fff 45%,#f1f5f9 70%);background-size:220% 100%;animation:thumb-loading 1.4s ease-in-out infinite}.merge-pro__page-meta{display:flex;justify-content:space-between;gap:8px;align-items:center}.merge-pro__page-meta span{padding:5px 9px;border-radius:999px;background:#fee2e2;color:#991b1b;font-weight:950;font-size:.82rem}.merge-pro__page-file{color:#64748b;font-size:.8rem}.merge-pro__page-actions{display:grid;grid-template-columns:repeat(3,1fr)}.merge-pro__page-actions button{min-height:38px;padding:6px}.merge-pro__page-actions button:last-child{background:#fee2e2;color:#991b1b}.pdf-modal{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:20px}.pdf-modal__backdrop{position:absolute;inset:0;background:rgba(15,23,42,.72);backdrop-filter:blur(6px)}.pdf-modal__panel{position:relative;z-index:1;display:grid;grid-template-rows:auto minmax(0,1fr);width:min(1120px,96vw);height:min(820px,92vh);overflow:hidden;border-radius:24px;background:#fff;box-shadow:0 30px 90px rgba(0,0,0,.35)}.pdf-modal__header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;border-bottom:1px solid #e2e8f0}.pdf-modal__header h2{margin:0;font-size:1.05rem}.pdf-modal__header div{display:flex;gap:10px;align-items:center}.pdf-modal__viewer{width:100%;height:100%;border:0;background:#f8fafc}.pdf-modal__download,.pdf-modal__close{border:0;cursor:pointer;font:inherit;font-weight:950}.pdf-modal__download{min-height:40px;padding:9px 14px;border-radius:999px;background:#ef4444;color:#fff}.pdf-modal__close{display:grid;width:40px;height:40px;place-items:center;border-radius:999px;background:#e2e8f0;color:#0f172a;font-size:1.35rem;line-height:1}@keyframes thumb-loading{0%{background-position:120% 0}100%{background-position:-120% 0}}@media (prefers-reduced-motion:reduce){.merge-pro button,.merge-pro__thumb{transition:none}.merge-pro__placeholder--loading{animation:none}}@media (max-width:900px){.merge-pro__hero,.merge-pro__layout{grid-template-columns:1fr;display:grid}.merge-pro__sources{position:static}.merge-pro__summary{text-align:left}.merge-pro__page-grid{grid-template-columns:repeat(auto-fill,minmax(136px,1fr))}.merge-pro__thumb-frame{min-height:160px}.pdf-modal{padding:10px}.pdf-modal__panel{height:94vh;border-radius:18px}}
+  .merge-pro{display:grid;gap:22px;margin:34px 0 56px;padding:clamp(18px,3vw,30px);border:1px solid #e2e8f0;border-radius:32px;background:radial-gradient(circle at top left,rgba(239,68,68,.12),transparent 34%),linear-gradient(135deg,rgba(255,255,255,.97),rgba(248,250,252,.9));box-shadow:0 30px 90px rgba(15,23,42,.11)}.merge-pro__hero{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}.merge-pro__hero h2,.merge-pro__panel-head h3,.merge-pro__pages h3{margin:0}.merge-pro__hero h2{font-size:clamp(1.65rem,3vw,2.25rem);letter-spacing:-.04em}.merge-pro__hero p,.merge-pro__empty,.merge-pro__pages-head p{margin:0;color:#64748b}.merge-pro__eyebrow{display:inline-flex;margin-bottom:8px;padding:5px 10px;border-radius:999px;background:rgba(239,68,68,.1);color:#b91c1c;font-size:.78rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.merge-pro__summary{display:grid;min-width:148px;gap:2px;padding:14px 16px;border:1px solid #e2e8f0;border-radius:22px;background:rgba(255,255,255,.78);text-align:right}.merge-pro__summary strong{font-size:1.9rem;line-height:1}.merge-pro__summary span,.merge-pro__summary small{color:#64748b;font-weight:800}.merge-pro__message,.merge-pro__empty{margin:0;padding:13px 15px;border-radius:16px;background:#f8fafc;font-weight:850}.merge-pro__message--error{background:#fff1f2;color:#991b1b}.merge-pro__message--success{background:#ecfdf5;color:#166534}.merge-pro__layout{display:grid;grid-template-columns:380px minmax(0,1fr);gap:20px;align-items:start}.merge-pro__sources{position:sticky;top:18px;display:grid;gap:12px}.merge-pro__panel-head{display:flex;justify-content:space-between;gap:10px;align-items:center}.merge-pro button{border:0;cursor:pointer;font:inherit;font-weight:850;transition:transform 140ms ease,opacity 140ms ease}.merge-pro__secondary{padding:8px 10px;border-radius:999px;background:#e2e8f0;color:#334155}.merge-pro__primary{width:100%;min-height:48px;padding:12px 16px;border-radius:999px;background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;box-shadow:0 16px 34px rgba(239,68,68,.28)}.merge-pro__primary--dark{background:linear-gradient(135deg,#0f172a,#334155);box-shadow:0 16px 34px rgba(15,23,42,.22)}.merge-pro button:hover:not(:disabled){transform:translateY(-1px)}.merge-pro button:disabled{cursor:not-allowed;opacity:.45}.merge-pro__pages{display:grid;gap:14px}.merge-pro__pages-head{display:grid;gap:4px}.merge-pro__page-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}.merge-pro__page-card{display:grid;gap:10px;padding:12px;border:2px solid #e2e8f0;border-radius:22px;background:#fff;box-shadow:0 12px 28px rgba(15,23,42,.06);cursor:grab}.merge-pro__page-card:active{cursor:grabbing}.merge-pro__page-card--over{border-color:#ef4444!important;box-shadow:0 0 0 4px rgba(239,68,68,.12),0 18px 44px rgba(15,23,42,.12)!important}.merge-pro__thumb-frame{display:grid;min-height:190px;place-items:center;overflow:hidden;border:1px solid #e2e8f0;border-radius:16px;background:linear-gradient(135deg,#f8fafc,#fff1f2)}.merge-pro__thumb{display:grid;width:82%;place-items:center;transition:transform 180ms ease}.merge-pro__thumb img{display:block;width:100%;height:auto;box-shadow:0 12px 26px rgba(15,23,42,.16);pointer-events:none}.merge-pro__placeholder{display:grid;width:100%;min-height:138px;place-items:center;border-radius:12px;background:#f1f5f9;color:#94a3b8;font-size:1.35rem;font-weight:950}.merge-pro__placeholder--loading{background:linear-gradient(100deg,#f1f5f9 20%,#fff 45%,#f1f5f9 70%);background-size:220% 100%;animation:thumb-loading 1.4s ease-in-out infinite}.merge-pro__page-meta{display:flex;justify-content:space-between;gap:8px;align-items:center}.merge-pro__page-meta span{padding:5px 9px;border-radius:999px;background:#fee2e2;color:#991b1b;font-weight:950;font-size:.82rem}.merge-pro__page-file{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#64748b;font-size:.8rem}.merge-pro__page-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.merge-pro__page-actions button{min-height:38px;padding:6px;border-radius:999px;background:#e2e8f0;color:#334155}.merge-pro__page-actions button:last-child{background:#fee2e2;color:#991b1b}.pdf-modal{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:20px}.pdf-modal__backdrop{position:absolute;inset:0;background:rgba(15,23,42,.72);backdrop-filter:blur(6px)}.pdf-modal__panel{position:relative;z-index:1;display:grid;grid-template-rows:auto minmax(0,1fr);width:min(1120px,96vw);height:min(820px,92vh);overflow:hidden;border-radius:24px;background:#fff;box-shadow:0 30px 90px rgba(0,0,0,.35)}.pdf-modal__header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;border-bottom:1px solid #e2e8f0}.pdf-modal__header h2{margin:0;font-size:1.05rem}.pdf-modal__header div{display:flex;gap:10px;align-items:center}.pdf-modal__viewer{width:100%;height:100%;border:0;background:#f8fafc}.pdf-modal__download,.pdf-modal__close{border:0;cursor:pointer;font:inherit;font-weight:950}.pdf-modal__download{min-height:40px;padding:9px 14px;border-radius:999px;background:#ef4444;color:#fff}.pdf-modal__close{display:grid;width:40px;height:40px;place-items:center;border-radius:999px;background:#e2e8f0;color:#0f172a;font-size:1.35rem;line-height:1}@keyframes thumb-loading{0%{background-position:120% 0}100%{background-position:-120% 0}}@media (prefers-reduced-motion:reduce){.merge-pro button,.merge-pro__thumb{transition:none}.merge-pro__placeholder--loading{animation:none}}@media (max-width:900px){.merge-pro__hero,.merge-pro__layout{grid-template-columns:1fr;display:grid}.merge-pro__sources{position:static}.merge-pro__summary{text-align:left}.merge-pro__page-grid{grid-template-columns:repeat(auto-fill,minmax(136px,1fr))}.merge-pro__thumb-frame{min-height:160px}.pdf-modal{padding:10px}.pdf-modal__panel{height:94vh;border-radius:18px}}
 </style>
