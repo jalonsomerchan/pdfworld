@@ -541,6 +541,63 @@ textarea:focus,
   color: var(--color-info);
 }
 
+.home-tool-card,
+.category-card,
+.tool-card,
+.pw-card,
+.home-seo-card,
+.privacy-card,
+.featured-multitool,
+.category-editorial__copy,
+.category-popular,
+.category-faq details,
+.uploaded-file,
+.tool-result,
+.tool-processing {
+  animation: ui-state-enter 240ms ease-out both;
+}
+
+.home-tool-card__icon,
+.category-card__icon,
+.tool-card__title span,
+.status-pill,
+.badge,
+.pw-badge {
+  transition:
+    transform var(--transition-fast),
+    background-color var(--transition-base),
+    border-color var(--transition-base),
+    color var(--transition-base),
+    box-shadow var(--transition-base);
+}
+
+.home-tool-card:hover .home-tool-card__icon,
+.category-card:hover .category-card__icon,
+.tool-card:not(.tool-card--disabled):hover .tool-card__title span {
+  transform: translateY(-2px) rotate(-1deg);
+}
+
+.pw-button:active:not(:disabled),
+.btn:active:not(:disabled),
+.tool-filter:active,
+.theme-toggle:active,
+.home-tool-card:active,
+.category-card:active,
+.tool-card:not(.tool-card--disabled):active {
+  transform: translateY(0) scale(0.99);
+}
+
+@keyframes ui-state-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Overrides dark para estilos scoped que usan colores duros en herramientas y privacidad. */
 [data-theme="dark"] .privacy-card,
 [data-theme="dark"] .merge-pro,
@@ -630,5 +687,21 @@ textarea:focus,
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .home-tool-card,
+  .category-card,
+  .tool-card,
+  .pw-card,
+  .home-seo-card,
+  .privacy-card,
+  .featured-multitool,
+  .category-editorial__copy,
+  .category-popular,
+  .category-faq details,
+  .uploaded-file,
+  .tool-result,
+  .tool-processing {
+    animation: none !important;
   }
 }
