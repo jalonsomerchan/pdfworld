@@ -29,6 +29,9 @@
     grid-template-columns: auto minmax(0, 1fr);
     gap: 1rem;
     align-items: center;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     padding: clamp(1rem, 2.5vw, 1.35rem);
     border: 1px solid color-mix(in srgb, var(--color-success, #16a34a) 24%, var(--color-border, #e2e8f0));
     border-radius: var(--radius-xl, 1.25rem);
@@ -57,12 +60,14 @@
   .tool-result strong {
     color: var(--color-text, #0f172a);
     font-size: clamp(1rem, 2vw, 1.12rem);
+    overflow-wrap: anywhere;
   }
 
   .tool-result p {
     margin: 0;
     color: var(--color-text-muted, #64748b);
     font-weight: 750;
+    overflow-wrap: anywhere;
   }
 
   .tool-result__actions {
@@ -75,13 +80,14 @@
 
   .tool-result__download,
   .tool-result__secondary {
-    min-height: 2.55rem;
+    min-height: 2.75rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: .62rem 1rem;
+    padding: .7rem 1rem;
     border-radius: 999px;
     font-weight: 900;
+    text-align: center;
     text-decoration: none;
   }
 
@@ -98,6 +104,15 @@
   @media (max-width: 520px) {
     .tool-result {
       grid-template-columns: 1fr;
+      justify-items: start;
+      padding: 1rem;
+      border-radius: var(--radius-lg, 1rem);
+    }
+
+    .tool-result__actions,
+    .tool-result__download,
+    .tool-result__secondary {
+      width: 100%;
     }
   }
 </style>
