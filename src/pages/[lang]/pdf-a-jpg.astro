@@ -1,0 +1,84 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ExtractImagesPdfTool from '../../components/ExtractImagesPdfTool.svelte';
+import { getLocalizedPath, isLang, type Lang } from '../../i18n/utils';
+import { locales } from '../../i18n/ui';
+
+export function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params;
+
+if (!isLang(lang)) {
+  return Astro.redirect(getLocalizedPath('es', 'pdf-a-jpg'));
+}
+
+const copy = {
+  es: {
+    title: 'Convertir PDF a JPG online gratis y privado',
+    description: 'Convierte páginas de un PDF en imágenes JPG desde el navegador, sin subir archivos a servidores.',
+    badge: 'PDF a JPG · Sin subidas · En tu navegador',
+    h1: 'Convertir PDF a JPG',
+    lead: 'Carga un PDF, elige páginas o rangos, selecciona JPG, ajusta calidad y resolución, y descarga las páginas como imágenes o ZIP.',
+    howTitle: 'Cómo convertir PDF a JPG',
+    step1: 'Selecciona un archivo PDF desde tu dispositivo.',
+    step2: 'Elige las páginas que quieres convertir y selecciona formato JPG.',
+    step3: 'Genera las imágenes y descarga una imagen individual o un ZIP.',
+    privacyTitle: 'Conversión local y privada',
+    privacyText: 'El PDF se renderiza con pdf.js en tu navegador. No se sube a servidores y el archivo original no se modifica.',
+    noteTitle: 'Conversión por renderizado',
+    noteText: 'La herramienta exporta cada página como imagen JPG renderizada. No extrae recursos internos originales del PDF.',
+    footer: 'Tus archivos se procesan localmente en tu navegador.',
+  },
+  en: {
+    title: 'Convert PDF to JPG online for free and privately',
+    description: 'Convert PDF pages into JPG images from the browser, without uploading files to servers.',
+    badge: 'PDF to JPG · No uploads · In your browser',
+    h1: 'Convert PDF to JPG',
+    lead: 'Load a PDF, choose pages or ranges, select JPG, adjust quality and resolution, then download pages as images or a ZIP.',
+    howTitle: 'How to convert PDF to JPG',
+    step1: 'Select a PDF file from your device.',
+    step2: 'Choose the pages you want to convert and select JPG format.',
+    step3: 'Generate the images and download a single image or a ZIP.',
+    privacyTitle: 'Local and private conversion',
+    privacyText: 'The PDF is rendered with pdf.js in your browser. It is not uploaded to servers and the original file is not changed.',
+    noteTitle: 'Rendered page conversion',
+    noteText: 'The tool exports each page as a rendered JPG image. It does not extract original internal PDF resources.',
+    footer: 'Your files are processed locally in your browser.',
+  },
+} as const;
+
+const pageCopy = copy[lang as Lang];
+---
+
+<BaseLayout lang={lang} title={pageCopy.title} description={pageCopy.description} path="pdf-a-jpg">
+  <section class="hero">
+    <span class="badge">{pageCopy.badge}</span>
+    <h1>{pageCopy.h1}</h1>
+    <p class="lead">{pageCopy.lead}</p>
+  </section>
+
+  <ExtractImagesPdfTool client:load lang={lang} />
+
+  <section aria-labelledby="how-title">
+    <h2 id="how-title">{pageCopy.howTitle}</h2>
+    <ol>
+      <li>{pageCopy.step1}</li>
+      <li>{pageCopy.step2}</li>
+      <li>{pageCopy.step3}</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>{pageCopy.privacyTitle}</h2>
+    <p>{pageCopy.privacyText}</p>
+  </section>
+
+  <section>
+    <h2>{pageCopy.noteTitle}</h2>
+    <p>{pageCopy.noteText}</p>
+  </section>
+
+  <Fragment slot="footer">{pageCopy.footer}</Fragment>
+</BaseLayout>
