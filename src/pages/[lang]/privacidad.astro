@@ -17,19 +17,19 @@ const currentLang = lang as Lang;
 
 const content = {
   es: {
-    title: 'Privacidad en PDFWorld',
-    description: 'Cómo trata PDFWorld tus archivos PDF: procesamiento local en el navegador, sin subidas a servidores y con almacenamiento temporal limitado.',
+    title: 'Privacidad en FácilPDF',
+    description: 'Cómo trata FácilPDF tus archivos PDF: procesamiento local en el navegador, sin subidas a servidores, almacenamiento temporal limitado y analítica opcional sin datos de archivos.',
     badge: 'Privacidad clara',
     h1: 'Tus PDF se quedan en tu navegador',
-    lead: 'PDFWorld está pensado para trabajar con documentos directamente en tu dispositivo. En las herramientas disponibles, los archivos se procesan de forma local en el navegador y no se suben a nuestros servidores.',
+    lead: 'FácilPDF está pensado para trabajar con documentos directamente en tu dispositivo. En las herramientas disponibles, los archivos se procesan de forma local en el navegador y no se suben a nuestros servidores.',
     footer: 'Tus archivos se procesan localmente. Consulta la página de privacidad para entender los detalles.',
   },
   en: {
-    title: 'Privacy at PDFWorld',
-    description: 'How PDFWorld handles your PDF files: local browser processing, no server uploads and limited temporary storage.',
+    title: 'Privacy at FácilPDF',
+    description: 'How FácilPDF handles your PDF files: local browser processing, no server uploads, limited temporary storage and optional analytics without file data.',
     badge: 'Clear privacy',
     h1: 'Your PDFs stay in your browser',
-    lead: 'PDFWorld is designed to work with documents directly on your device. In the available tools, files are processed locally in the browser and are not uploaded to our servers.',
+    lead: 'FácilPDF is designed to work with documents directly on your device. In the available tools, files are processed locally in the browser and are not uploaded to our servers.',
     footer: 'Your files are processed locally. See the privacy page for details.',
   },
 }[currentLang];
@@ -48,10 +48,11 @@ const content = {
         <h2>Resumen rápido</h2>
         <p><strong>No necesitamos recibir tus PDF para que funcionen las herramientas principales.</strong> Cuando unes, divides, ordenas, rotas, comprimes o escaneas documentos, el trabajo se hace en tu propio navegador.</p>
         <ul>
-          <li>Los PDF no se suben a un servidor de PDFWorld.</li>
+          <li>Los PDF no se suben a un servidor de FácilPDF.</li>
           <li>El procesamiento ocurre en memoria, pestaña o almacenamiento local del navegador, según la herramienta.</li>
           <li>Al cerrar o recargar la página, el estado de trabajo se pierde en la mayoría de herramientas.</li>
           <li>Si una herramienta usa almacenamiento local temporal para pasar un PDF a otra herramienta, ese archivo se guarda en tu navegador durante un tiempo limitado.</li>
+          <li>La analítica, si se activa por configuración, solo admite eventos generales y no nombres, contenidos, páginas, contraseñas ni metadatos de archivos.</li>
         </ul>
       </section>
 
@@ -64,7 +65,7 @@ const content = {
         <div class="privacy-card">
           <span aria-hidden="true">🚫</span>
           <h2>No subimos tus documentos</h2>
-          <p>Las herramientas están diseñadas para funcionar sin enviar el contenido de tus archivos a servidores externos. PDFWorld no recibe una copia de tus documentos para procesarlos.</p>
+          <p>Las herramientas están diseñadas para funcionar sin enviar el contenido de tus archivos a servidores externos. FácilPDF no recibe una copia de tus documentos para procesarlos.</p>
         </div>
         <div class="privacy-card">
           <span aria-hidden="true">🧹</span>
@@ -86,19 +87,20 @@ const content = {
 
       <section class="privacy-card">
         <h2>Cámara y escaneo de documentos</h2>
-        <p>La herramienta de escaneo puede pedir permiso para usar la cámara. La imagen capturada se utiliza para crear el PDF en el navegador. PDFWorld no recibe la imagen de la cámara ni el PDF generado.</p>
+        <p>La herramienta de escaneo puede pedir permiso para usar la cámara. La imagen capturada se utiliza para crear el PDF en el navegador. FácilPDF no recibe la imagen de la cámara ni el PDF generado.</p>
         <p>El permiso de cámara lo gestiona tu navegador. Puedes retirarlo desde los ajustes del navegador o del dispositivo.</p>
       </section>
 
       <section class="privacy-card">
-        <h2>Analítica y cookies</h2>
-        <p>Esta página queda preparada para explicar cualquier analítica o cookie que se añada en el futuro. Si PDFWorld incorpora medición de uso, avisos de consentimiento o cookies no esenciales, esta sección deberá actualizarse con información clara sobre qué se mide, con qué finalidad y cómo se puede configurar.</p>
-        <p>La promesa importante es esta: la analítica, si existe, no debería utilizarse para leer ni subir el contenido de tus PDF.</p>
+        <h2>Analítica opcional</h2>
+        <p>FácilPDF incluye una capa técnica de analítica privacy-friendly que está desactivada salvo que se configure explícitamente mediante variables públicas de entorno.</p>
+        <p>Si se activa, solo permite eventos generales como herramienta abierta, herramienta completada, error genérico, instalación PWA u offline listo. La capa filtra los datos con una lista blanca de campos y bloquea expresamente nombres de archivo, contenido del PDF, texto extraído, páginas, contraseñas, títulos, autores y metadatos.</p>
+        <p>La finalidad sería entender qué herramientas se usan y detectar errores generales sin acceder a documentos ni registrar información sensible del usuario.</p>
       </section>
 
       <section class="privacy-card">
         <h2>Límites honestos</h2>
-        <p>Aunque PDFWorld no suba tus archivos para procesarlos, sigues usando un navegador, un sistema operativo y un dispositivo. Si tienes extensiones instaladas, software corporativo, sincronización de sistema o copias de seguridad, esos elementos pueden tener sus propias reglas.</p>
+        <p>Aunque FácilPDF no suba tus archivos para procesarlos, sigues usando un navegador, un sistema operativo y un dispositivo. Si tienes extensiones instaladas, software corporativo, sincronización de sistema o copias de seguridad, esos elementos pueden tener sus propias reglas.</p>
         <p>Para documentos muy sensibles, usa siempre un dispositivo de confianza, evita extensiones innecesarias y descarga el resultado solo cuando estés conforme.</p>
       </section>
     </article>
@@ -106,12 +108,13 @@ const content = {
     <article class="privacy-page" aria-label="Privacy information">
       <section class="privacy-card privacy-card--highlight">
         <h2>Quick summary</h2>
-        <p><strong>PDFWorld does not need to receive your PDFs for the main tools to work.</strong> Merging, splitting, reordering, rotating, compressing and scanning run locally in your browser.</p>
+        <p><strong>FácilPDF does not need to receive your PDFs for the main tools to work.</strong> Merging, splitting, reordering, rotating, compressing and scanning run locally in your browser.</p>
         <ul>
-          <li>PDF files are not uploaded to a PDFWorld server.</li>
+          <li>PDF files are not uploaded to a FácilPDF server.</li>
           <li>Processing happens in browser memory, the current tab or local browser storage depending on the tool.</li>
           <li>Closing or reloading the page usually clears the current workspace.</li>
           <li>Temporary local storage may be used to pass a generated PDF to another tool.</li>
+          <li>Analytics, when explicitly enabled, only accepts generic events and never file names, content, pages, passwords or metadata.</li>
         </ul>
       </section>
 
@@ -121,8 +124,9 @@ const content = {
       </section>
 
       <section class="privacy-card">
-        <h2>Analytics and cookies</h2>
-        <p>This section is ready for any future analytics or cookie information. If non-essential cookies or usage measurement are added, this page should clearly explain what is measured, why and how it can be configured.</p>
+        <h2>Optional analytics</h2>
+        <p>FácilPDF includes a privacy-friendly analytics layer that remains disabled unless it is explicitly configured through public environment variables.</p>
+        <p>If enabled, it only accepts generic events such as tool opened, tool completed, generic error, PWA installed or offline ready. The analytics layer uses an allowlist and blocks file names, PDF content, extracted text, pages, passwords, titles, authors and metadata.</p>
       </section>
     </article>
   )}
