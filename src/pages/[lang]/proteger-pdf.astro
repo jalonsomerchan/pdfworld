@@ -1,0 +1,113 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getLocalizedPath, isLang, type Lang } from '../../i18n/utils';
+import { locales } from '../../i18n/ui';
+
+export function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params;
+
+if (!isLang(lang)) {
+  return Astro.redirect(getLocalizedPath('es', 'proteger-pdf'));
+}
+
+const copy = {
+  es: {
+    title: 'Proteger PDF con contraseña: límites en navegador',
+    description: 'Explicación clara sobre por qué FácilPDF no cifra PDFs con contraseña solo en navegador si no puede garantizar seguridad real.',
+    badge: 'Seguridad PDF · Sin falsas promesas',
+    h1: 'Proteger PDF con contraseña',
+    lead: 'FácilPDF prioriza la privacidad local. Por eso esta herramienta no ofrece todavía cifrado de PDF con contraseña si no puede garantizar una protección real y verificable desde el navegador.',
+    statusTitle: 'Estado de la herramienta',
+    statusText: 'La protección con contraseña está en investigación. Muchas librerías frontend populares permiten editar o generar PDFs, pero no siempre aplican cifrado PDF estándar de forma fiable y compatible con lectores habituales.',
+    whyTitle: 'Por qué no activamos una protección falsa',
+    whyItems: [
+      'Añadir una contraseña visible en una interfaz no significa cifrar el contenido del PDF.',
+      'Algunos métodos solo bloquean acciones en ciertos visores, pero no protegen realmente el archivo.',
+      'Una protección incompleta puede dar una falsa sensación de seguridad al usuario.',
+      'No queremos enviar documentos a un servidor externo para cifrarlos, porque rompería la promesa de privacidad local.',
+    ],
+    currentTitle: 'Qué puedes hacer ahora',
+    currentText: 'Para documentos sensibles, usa una herramienta de escritorio o un visor PDF que indique explícitamente cifrado estándar del documento. Mantén una copia original y verifica el resultado abriéndolo en otro lector antes de compartirlo.',
+    futureTitle: 'Implementación futura',
+    futureText: 'Esta página queda preparada para integrar una solución frontend fiable si se valida una librería compatible con cifrado PDF real, sin backend y sin subir archivos.',
+    privacyTitle: 'Privacidad por defecto',
+    privacyText: 'No subas aquí documentos sensibles esperando cifrado: esta página es informativa. FácilPDF no recibe tus archivos ni usa APIs externas para proteger documentos.',
+    footer: 'FácilPDF no promete seguridad si técnicamente no puede garantizarla.',
+  },
+  en: {
+    title: 'Protect PDF with password: browser limits',
+    description: 'Clear explanation of why FácilPDF does not password-encrypt PDFs in the browser unless real security can be guaranteed.',
+    badge: 'PDF security · No false promises',
+    h1: 'Protect PDF with password',
+    lead: 'FácilPDF prioritizes local privacy. That is why this tool does not yet offer PDF password encryption unless it can guarantee real and verifiable browser-based protection.',
+    statusTitle: 'Tool status',
+    statusText: 'Password protection is under investigation. Many popular frontend libraries can edit or generate PDFs, but they do not always apply standard PDF encryption reliably across common readers.',
+    whyTitle: 'Why we do not enable fake protection',
+    whyItems: [
+      'Adding a password field in an interface does not mean the PDF content is encrypted.',
+      'Some methods only restrict actions in certain viewers, but do not truly protect the file.',
+      'Incomplete protection can give users a false sense of security.',
+      'We do not want to send documents to an external server for encryption, because that would break the local privacy promise.',
+    ],
+    currentTitle: 'What you can do now',
+    currentText: 'For sensitive documents, use a desktop tool or PDF viewer that explicitly states it applies standard document encryption. Keep an original copy and verify the result in another reader before sharing it.',
+    futureTitle: 'Future implementation',
+    futureText: 'This page is ready for a reliable frontend implementation if a library is validated for real PDF encryption, without backend and without uploads.',
+    privacyTitle: 'Privacy by default',
+    privacyText: 'Do not upload sensitive documents here expecting encryption: this page is informational. FácilPDF does not receive your files or use external APIs to protect documents.',
+    footer: 'FácilPDF does not promise security when it cannot technically guarantee it.',
+  },
+} as const;
+
+const pageCopy = copy[lang as Lang];
+---
+
+<BaseLayout lang={lang} title={pageCopy.title} description={pageCopy.description} path="proteger-pdf">
+  <section class="hero security-hero">
+    <span class="badge">{pageCopy.badge}</span>
+    <h1>{pageCopy.h1}</h1>
+    <p class="lead">{pageCopy.lead}</p>
+  </section>
+
+  <section class="security-panel security-panel--status" aria-labelledby="status-title">
+    <span aria-hidden="true">🛡️</span>
+    <div>
+      <h2 id="status-title">{pageCopy.statusTitle}</h2>
+      <p>{pageCopy.statusText}</p>
+    </div>
+  </section>
+
+  <section class="security-panel" aria-labelledby="why-title">
+    <span aria-hidden="true">⚠️</span>
+    <div>
+      <h2 id="why-title">{pageCopy.whyTitle}</h2>
+      <ul>
+        {pageCopy.whyItems.map((item) => <li>{item}</li>)}
+      </ul>
+    </div>
+  </section>
+
+  <section class="security-grid">
+    <article>
+      <h2>{pageCopy.currentTitle}</h2>
+      <p>{pageCopy.currentText}</p>
+    </article>
+    <article>
+      <h2>{pageCopy.futureTitle}</h2>
+      <p>{pageCopy.futureText}</p>
+    </article>
+    <article>
+      <h2>{pageCopy.privacyTitle}</h2>
+      <p>{pageCopy.privacyText}</p>
+    </article>
+  </section>
+
+  <style>
+    .security-hero{padding-bottom:clamp(1.5rem,4vw,2.8rem)}.security-panel{display:grid;grid-template-columns:auto 1fr;gap:1rem;margin:1.2rem 0;padding:clamp(1.1rem,3vw,1.7rem);border:1px solid var(--color-border,#e2e8f0);border-radius:var(--radius-2xl,1.5rem);background:var(--color-surface,#fff);box-shadow:var(--shadow-sm,0 10px 28px rgb(15 23 42 / .08))}.security-panel--status{background:linear-gradient(135deg,#fff7ed,#fff)}.security-panel>span{display:grid;width:3.2rem;height:3.2rem;place-items:center;border-radius:1rem;background:#fff7ed;font-size:1.7rem}.security-panel h2,.security-panel p{margin-top:0}.security-panel p{color:var(--color-text-muted,#475569)}.security-panel ul{margin:.35rem 0 0;padding-left:1.2rem;color:var(--color-text-muted,#475569)}.security-panel li+li{margin-top:.45rem}.security-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin:1.2rem 0 3rem}.security-grid article{padding:clamp(1rem,3vw,1.45rem);border:1px solid var(--color-border,#e2e8f0);border-radius:var(--radius-xl,1.25rem);background:var(--color-surface-soft,#f8fafc)}.security-grid h2{margin-top:0}.security-grid p{margin-bottom:0;color:var(--color-text-muted,#475569)}@media(max-width:820px){.security-panel,.security-grid{grid-template-columns:1fr}.security-panel>span{width:2.8rem;height:2.8rem}}
+  </style>
+
+  <Fragment slot="footer">{pageCopy.footer}</Fragment>
+</BaseLayout>
