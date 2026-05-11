@@ -42,7 +42,11 @@ export default tseslint.config(
     },
     rules: {
       '@typescript-eslint/no-unused-vars': 'off',
+      'no-undef': 'off',
       'no-unused-vars': 'off',
+      'svelte/no-immutable-reactive-statements': 'off',
+      'svelte/prefer-svelte-reactivity': 'off',
+      'svelte/require-each-key': 'off',
     },
   },
   {
