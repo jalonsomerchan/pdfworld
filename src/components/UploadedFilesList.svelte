@@ -39,20 +39,24 @@
   }: Props = $props();
 
   const totalFiles = $derived(files.length);
+
+  function actionLabel(action: string, file: UploadedFileItem) {
+    return `${action}: ${file.name}`;
+  }
 </script>
 
 <section class="uploaded-files" aria-labelledby="uploaded-files-title">
   <div class="uploaded-files__header">
     <div>
       <h2 id="uploaded-files-title">{title}</h2>
-      <p>{totalFiles} {summaryLabel}</p>
+      <p aria-live="polite">{totalFiles} {summaryLabel}</p>
     </div>
   </div>
 
   {#if files.length === 0}
     <p class="uploaded-files__empty">{emptyText}</p>
   {:else}
-    <ul class="uploaded-files__list">
+    <ul class="uploaded-files__list" aria-label={title}>
       {#each files as file, index (file.id)}
         <li class={`uploaded-file uploaded-file--${file.status ?? 'ready'}`}>
           <span class="uploaded-file__icon" aria-hidden="true">{file.type?.startsWith('image/') ? '🖼️' : '📄'}</span>
@@ -63,18 +67,18 @@
           </div>
 
           {#if file.statusLabel}
-            <span class="uploaded-file__status">{file.statusLabel}</span>
+            <span class="uploaded-file__status" role={file.status === 'error' ? 'alert' : 'status'}>{file.statusLabel}</span>
           {/if}
 
-          <div class="uploaded-file__actions">
+          <div class="uploaded-file__actions" aria-label={`Acciones para ${file.name}`}>
             {#if reorderable && onMoveUp}
-              <button type="button" onclick={() => onMoveUp?.(file)} disabled={index === 0}>{moveUpLabel}</button>
+              <button type="button" onclick={() => onMoveUp?.(file)} disabled={index === 0} aria-label={actionLabel(moveUpLabel, file)}>{moveUpLabel}</button>
             {/if}
             {#if reorderable && onMoveDown}
-              <button type="button" onclick={() => onMoveDown?.(file)} disabled={index === files.length - 1}>{moveDownLabel}</button>
+              <button type="button" onclick={() => onMoveDown?.(file)} disabled={index === files.length - 1} aria-label={actionLabel(moveDownLabel, file)}>{moveDownLabel}</button>
             {/if}
             {#if removable && onRemove}
-              <button class="uploaded-file__remove" type="button" onclick={() => onRemove?.(file)}>{removeLabel}</button>
+              <button class="uploaded-file__remove" type="button" onclick={() => onRemove?.(file)} aria-label={actionLabel(removeLabel, file)}>{removeLabel}</button>
             {/if}
           </div>
         </li>
@@ -221,7 +225,8 @@
     font-weight: 850;
   }
 
-  .uploaded-file__actions button:hover:not(:disabled) {
+  .uploaded-file__actions button:hover:not(:disabled),
+  .uploaded-file__actions button:focus-visible:not(:disabled) {
     background: var(--color-surface-soft, #f1f5f9);
   }
 
