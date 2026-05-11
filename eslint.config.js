@@ -4,6 +4,11 @@ import tseslint from 'typescript-eslint';
 import astro from 'eslint-plugin-astro';
 import svelte from 'eslint-plugin-svelte';
 
+const astroParserOptions = {
+  parser: tseslint.parser,
+  extraFileExtensions: ['.astro'],
+};
+
 export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -30,9 +35,8 @@ export default tseslint.config(
   },
   {
     files: ['**/*.astro'],
-    parserOptions: {
-      parser: tseslint.parser,
-      extraFileExtensions: ['.astro'],
+    languageOptions: {
+      parserOptions: astroParserOptions,
     },
   },
 );
