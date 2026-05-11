@@ -25,11 +25,28 @@ const toolsCountLabel = currentLang === 'es' ? 'herramientas' : 'tools';
 const openToolLabel = currentLang === 'es' ? 'Abrir herramienta' : 'Open tool';
 const soonLabel = currentLang === 'es' ? 'Ver ficha' : 'View page';
 const heroTitle = currentLang === 'es'
-  ? 'Herramientas online para los amantes de la privacidad'
-  : 'Online tools for privacy lovers';
+  ? 'Herramientas PDF gratis, rápidas y privadas'
+  : 'Free, fast and private PDF tools';
 const heroLead = currentLang === 'es'
-  ? 'Herramientas online y gratuitas para unir PDF, separar PDF, comprimir PDF, convertir imágenes y organizar documentos. Sin instalación y con procesamiento local siempre que sea posible.'
-  : 'Free online tools to merge PDF, split PDF, compress PDF, convert images and organize documents. No installation and local processing whenever possible.';
+  ? 'Une, divide, comprime, convierte y organiza PDFs desde el navegador. Sin instalación, sin esperas y con procesamiento local siempre que la herramienta lo permite.'
+  : 'Merge, split, compress, convert and organize PDFs in your browser. No installation, no waiting and local processing whenever the tool supports it.';
+const heroCopy = currentLang === 'es'
+  ? {
+      badge: 'Privado por diseño',
+      primaryCta: 'Ver herramientas',
+      secondaryCta: 'Cómo protegemos tus PDF',
+      statTools: `${totalTools} herramientas`,
+      statAvailable: `${availableTools} listas para usar`,
+      statLocal: 'Procesamiento local',
+    }
+  : {
+      badge: 'Private by design',
+      primaryCta: 'Browse tools',
+      secondaryCta: 'How we protect your PDFs',
+      statTools: `${totalTools} tools`,
+      statAvailable: `${availableTools} ready to use`,
+      statLocal: 'Local processing',
+    };
 const multitool = pdfTools.find((tool) => tool.id === 'pdf-multitool');
 const multitoolHref = getLocalizedPath(currentLang, multitool?.route ?? 'multiherramienta-pdf');
 const multitoolCopy = currentLang === 'es'
@@ -60,9 +77,19 @@ const multitoolCopy = currentLang === 'es'
   title={t('seo.home.title')}
   description={t('seo.home.description')}
 >
-  <section class="home-hero" aria-labelledby="home-title">
+  <section class="home-hero home-hero--product" aria-labelledby="home-title">
+    <span class="home-hero__eyebrow">{heroCopy.badge}</span>
     <h1 id="home-title">{heroTitle}</h1>
     <p class="home-hero__lead">{heroLead}</p>
+    <div class="home-hero__actions">
+      <a class="home-hero__cta home-hero__cta--primary" href="#tools-title">{heroCopy.primaryCta}</a>
+      <a class="home-hero__cta home-hero__cta--secondary" href={getLocalizedPath(currentLang, 'privacidad')}>{heroCopy.secondaryCta}</a>
+    </div>
+    <div class="home-hero__stats" aria-label={currentLang === 'es' ? 'Resumen de FácilPDF' : 'FácilPDF summary'}>
+      <span>{heroCopy.statTools}</span>
+      <span>{heroCopy.statAvailable}</span>
+      <span>{heroCopy.statLocal}</span>
+    </div>
   </section>
 
   <section class="featured-multitool" aria-labelledby="featured-multitool-title">
@@ -86,6 +113,13 @@ const multitoolCopy = currentLang === 'es'
   </section>
 
   <section class="tools-catalog" aria-labelledby="tools-title">
+    <div class="tools-catalog__header">
+      <div>
+        <h2 id="tools-title">{currentLang === 'es' ? 'Todas las herramientas PDF' : 'All PDF tools'}</h2>
+        <p>{currentLang === 'es' ? 'Elige una herramienta por categoría o abre directamente la que necesites.' : 'Choose a tool by category or open the one you need directly.'}</p>
+      </div>
+      <span class="tools-count" data-tools-count>{totalTools} {toolsCountLabel}</span>
+    </div>
     <div class="tool-filters" role="group" aria-label={filterLabel}>
       <button class="tool-filter is-active" type="button" data-tool-filter="all" aria-pressed="true">
         {allLabel}
@@ -186,6 +220,54 @@ const multitoolCopy = currentLang === 'es'
   </script>
 
   <style>
+    .home-hero--product {
+      padding-bottom: clamp(2rem, 4vw, 3rem);
+    }
+
+    .home-hero__actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: .75rem;
+      margin-top: .35rem;
+    }
+
+    .home-hero__cta {
+      display: inline-flex;
+      min-height: 3rem;
+      align-items: center;
+      justify-content: center;
+      padding: .85rem 1.2rem;
+      border-radius: 999px;
+      font-weight: 950;
+      text-align: center;
+      text-decoration: none;
+      transition: transform var(--transition-fast, 120ms ease), box-shadow var(--transition-base, 180ms ease), background var(--transition-base, 180ms ease);
+    }
+
+    .home-hero__cta:hover,
+    .home-hero__cta:focus-visible {
+      transform: translateY(-1px);
+    }
+
+    .home-hero__cta--primary {
+      background: linear-gradient(135deg, var(--color-primary, #2563eb), var(--color-secondary, #7c3aed));
+      color: #fff;
+      box-shadow: var(--shadow-sm, 0 4px 12px rgb(15 23 42 / .08));
+    }
+
+    .home-hero__cta--primary:hover,
+    .home-hero__cta--primary:focus-visible {
+      color: #fff;
+      box-shadow: var(--shadow-md, 0 12px 32px rgb(15 23 42 / .12));
+    }
+
+    .home-hero__cta--secondary {
+      border: 1px solid var(--color-border, #e2e8f0);
+      background: var(--color-surface, #fff);
+      color: var(--color-text, #0f172a);
+    }
+
     .featured-multitool {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
@@ -298,6 +380,11 @@ const multitoolCopy = currentLang === 'es'
     }
 
     @media (max-width: 760px) {
+      .home-hero__actions,
+      .home-hero__cta {
+        width: 100%;
+      }
+
       .featured-multitool {
         grid-template-columns: 1fr;
       }
