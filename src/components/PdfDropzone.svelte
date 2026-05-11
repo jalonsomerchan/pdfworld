@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { consumePendingPdfTransfer } from '../lib/pdfTransfer';
+  import { validatePdfFiles, type PdfToolLang } from '../lib/pdfToolUtils';
 
   export let title = 'Arrastra tus PDF aquí';
   export let activeTitle = 'Suelta para añadirlos';
@@ -13,19 +14,24 @@
   export let selectedLabel = '';
   export let acceptTransfers = true;
   export let showPrivacyLink = true;
+  export let maxFileSize: number | undefined = undefined;
+  export let maxTotalSize: number | undefined = undefined;
+  export let maxFiles: number | undefined = undefined;
   export let onFiles: (files: File[]) => void | Promise<void> = () => {};
   export let onInvalidFiles: (files: File[]) => void | Promise<void> = () => {};
+  export let onValidationErrors: (errors: string[]) => void | Promise<void> = () => {};
 
   let inputElement: HTMLInputElement;
   let isDragging = false;
   let dragDepth = 0;
   let privacyHref = '/es/privacidad';
   let privacyText = 'Tus archivos se procesan en este navegador. Ver privacidad';
+  let currentLang: PdfToolLang = 'es';
 
   onMount(() => {
-    const lang = document.documentElement.lang === 'en' ? 'en' : 'es';
-    privacyHref = `/${lang}/privacidad`;
-    privacyText = lang === 'en'
+    currentLang = document.documentElement.lang === 'en' ? 'en' : 'es';
+    privacyHref = `/${currentLang}/privacidad`;
+    privacyText = currentLang === 'en'
       ? 'Files are processed in this browser. View privacy'
       : 'Tus archivos se procesan en este navegador. Ver privacidad';
 
@@ -35,10 +41,10 @@
       try {
         const transfer = await consumePendingPdfTransfer();
         if (transfer?.file) {
-          selectedLabel = lang === 'en'
+          selectedLabel = currentLang === 'en'
             ? `Imported from ${transfer.source}: ${transfer.file.name}`
             : `Importado desde ${transfer.source}: ${transfer.file.name}`;
-          await onFiles([transfer.file]);
+          await processFiles([transfer.file]);
         }
       } catch {
         // Ignore transfer errors so the normal uploader keeps working.
@@ -84,15 +90,23 @@
   async function processFiles(files: File[]) {
     if (files.length === 0) return;
 
-    const pdfFiles = files.filter(isPdf);
     const invalidFiles = files.filter((file) => !isPdf(file));
-
     if (invalidFiles.length > 0) {
       await onInvalidFiles(invalidFiles);
     }
 
-    if (pdfFiles.length === 0) return;
-    await onFiles(multiple ? pdfFiles : [pdfFiles[0]]);
+    const validation = validatePdfFiles(
+      multiple ? files : files.slice(0, 1),
+      { maxFileSize, maxTotalSize, maxFiles },
+      currentLang,
+    );
+
+    if (validation.errors.length > 0) {
+      await onValidationErrors(validation.errors);
+    }
+
+    if (validation.validFiles.length === 0) return;
+    await onFiles(multiple ? validation.validFiles : [validation.validFiles[0]]);
   }
 
   function isPdf(file: File) {
