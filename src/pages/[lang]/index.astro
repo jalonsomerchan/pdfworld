@@ -19,7 +19,6 @@ if (!isLang(lang)) {
 const currentLang = lang as Lang;
 const t = useTranslations(currentLang);
 const totalTools = pdfTools.length;
-const availableTools = pdfTools.filter((tool) => tool.status === 'available').length;
 const allLabel = currentLang === 'es' ? 'Todos' : 'All';
 const toolsCountLabel = currentLang === 'es' ? 'herramientas' : 'tools';
 const openToolLabel = currentLang === 'es' ? 'Abrir herramienta' : 'Open tool';
@@ -33,17 +32,11 @@ const heroCopy = currentLang === 'es'
       badge: 'Privado por diseño',
       primaryCta: 'Ver herramientas',
       secondaryCta: 'Cómo protegemos tus PDF',
-      statTools: `${totalTools} herramientas`,
-      statAvailable: `${availableTools} listas para usar`,
-      statLocal: 'Procesamiento local',
     }
   : {
       badge: 'Private by design',
       primaryCta: 'Browse tools',
       secondaryCta: 'How we protect your PDFs',
-      statTools: `${totalTools} tools`,
-      statAvailable: `${availableTools} ready to use`,
-      statLocal: 'Local processing',
     };
 const multitool = pdfTools.find((tool) => tool.id === 'pdf-multitool');
 const multitoolHref = getLocalizedPath(currentLang, multitool?.route ?? 'multiherramienta-pdf');
@@ -89,11 +82,6 @@ const searchCopy = currentLang === 'es'
     <div class="home-hero__actions">
       <a class="home-hero__cta home-hero__cta--primary" href="#tools-title">{heroCopy.primaryCta}</a>
       <a class="home-hero__cta home-hero__cta--secondary" href={getLocalizedPath(currentLang, 'privacidad')}>{heroCopy.secondaryCta}</a>
-    </div>
-    <div class="home-hero__stats" aria-label={currentLang === 'es' ? 'Resumen de FácilPDF' : 'FácilPDF summary'}>
-      <span>{heroCopy.statTools}</span>
-      <span>{heroCopy.statAvailable}</span>
-      <span>{heroCopy.statLocal}</span>
     </div>
   </section>
 
