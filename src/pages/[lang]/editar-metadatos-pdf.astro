@@ -1,0 +1,84 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import EditMetadataPdfTool from '../../components/EditMetadataPdfTool.svelte';
+import { getLocalizedPath, isLang, type Lang } from '../../i18n/utils';
+import { locales } from '../../i18n/ui';
+
+export function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params;
+
+if (!isLang(lang)) {
+  return Astro.redirect(getLocalizedPath('es', 'editar-metadatos-pdf'));
+}
+
+const copy = {
+  es: {
+    title: 'Editar metadatos PDF online gratis y privado',
+    description: 'Consulta y modifica metadatos básicos de un PDF desde el navegador, sin subir archivos a servidores.',
+    badge: '100% privado · Sin subidas · En tu navegador',
+    h1: 'Editar metadatos PDF',
+    lead: 'Carga un PDF, revisa título, autor, asunto, palabras clave, creador y productor, modifica los campos que necesites y descarga una copia actualizada.',
+    howTitle: 'Cómo editar metadatos de un PDF',
+    step1: 'Selecciona un archivo PDF desde tu dispositivo.',
+    step2: 'Revisa los metadatos detectados y cambia los campos compatibles.',
+    step3: 'Guarda una copia nueva y descárgala con los metadatos actualizados.',
+    privacyTitle: 'Metadatos PDF sin subir archivos',
+    privacyText: 'La lectura y escritura de metadatos se realiza en el navegador con pdf-lib. El documento original no se modifica ni se envía a ningún servidor.',
+    limitTitle: 'Límites técnicos',
+    limitText: 'Algunos PDFs incluyen metadatos personalizados o estructuras internas que pueden no leerse o conservarse completamente con una herramienta frontend.',
+    footer: 'Tus archivos se procesan localmente en tu navegador.',
+  },
+  en: {
+    title: 'Edit PDF metadata online for free and privately',
+    description: 'View and modify basic PDF metadata from the browser, without uploading files to servers.',
+    badge: '100% private · No uploads · In your browser',
+    h1: 'Edit PDF metadata',
+    lead: 'Load a PDF, review title, author, subject, keywords, creator and producer, edit the fields you need and download an updated copy.',
+    howTitle: 'How to edit PDF metadata',
+    step1: 'Select a PDF file from your device.',
+    step2: 'Review the detected metadata and change compatible fields.',
+    step3: 'Save a new copy and download it with updated metadata.',
+    privacyTitle: 'PDF metadata without uploads',
+    privacyText: 'Metadata reading and writing is performed in the browser with pdf-lib. The original document is not changed and is never sent to a server.',
+    limitTitle: 'Technical limits',
+    limitText: 'Some PDFs include custom metadata or internal structures that may not be fully readable or preserved with a frontend-only tool.',
+    footer: 'Your files are processed locally in your browser.',
+  },
+} as const;
+
+const pageCopy = copy[lang as Lang];
+---
+
+<BaseLayout lang={lang} title={pageCopy.title} description={pageCopy.description} path="editar-metadatos-pdf">
+  <section class="hero">
+    <span class="badge">{pageCopy.badge}</span>
+    <h1>{pageCopy.h1}</h1>
+    <p class="lead">{pageCopy.lead}</p>
+  </section>
+
+  <EditMetadataPdfTool client:load lang={lang} />
+
+  <section aria-labelledby="how-title">
+    <h2 id="how-title">{pageCopy.howTitle}</h2>
+    <ol>
+      <li>{pageCopy.step1}</li>
+      <li>{pageCopy.step2}</li>
+      <li>{pageCopy.step3}</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>{pageCopy.privacyTitle}</h2>
+    <p>{pageCopy.privacyText}</p>
+  </section>
+
+  <section>
+    <h2>{pageCopy.limitTitle}</h2>
+    <p>{pageCopy.limitText}</p>
+  </section>
+
+  <Fragment slot="footer">{pageCopy.footer}</Fragment>
+</BaseLayout>
