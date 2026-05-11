@@ -1,0 +1,84 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ExtractImagesPdfTool from '../../components/ExtractImagesPdfTool.svelte';
+import { getLocalizedPath, isLang, type Lang } from '../../i18n/utils';
+import { locales } from '../../i18n/ui';
+
+export function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params;
+
+if (!isLang(lang)) {
+  return Astro.redirect(getLocalizedPath('es', 'extraer-imagenes-pdf'));
+}
+
+const copy = {
+  es: {
+    title: 'Extraer imágenes de PDF online gratis y privado',
+    description: 'Convierte páginas de un PDF en imágenes PNG o JPG desde el navegador, sin subir archivos a servidores.',
+    badge: '100% privado · Sin subidas · En tu navegador',
+    h1: 'Extraer imágenes de PDF',
+    lead: 'Carga un PDF, elige páginas, formato PNG o JPG, calidad y resolución, y descarga las páginas renderizadas como imágenes o ZIP.',
+    howTitle: 'Cómo extraer imágenes de un PDF',
+    step1: 'Selecciona un archivo PDF desde tu dispositivo.',
+    step2: 'Elige las páginas a exportar, el formato y la resolución.',
+    step3: 'Genera las imágenes y descarga una imagen individual o un ZIP con todas.',
+    privacyTitle: 'Exportación local y privada',
+    privacyText: 'El PDF se renderiza en el navegador con pdf.js. No se sube a ningún servidor y el archivo original no se modifica.',
+    limitTitle: 'Qué extrae esta herramienta',
+    limitText: 'La herramienta exporta páginas renderizadas como imágenes. No extrae necesariamente los recursos internos originales incrustados en el PDF.',
+    footer: 'Tus archivos se procesan localmente en tu navegador.',
+  },
+  en: {
+    title: 'Extract PDF images online for free and privately',
+    description: 'Convert PDF pages into PNG or JPG images from the browser, without uploading files to servers.',
+    badge: '100% private · No uploads · In your browser',
+    h1: 'Extract images from PDF',
+    lead: 'Load a PDF, choose pages, PNG or JPG format, quality and resolution, then download rendered pages as images or a ZIP.',
+    howTitle: 'How to extract images from a PDF',
+    step1: 'Select a PDF file from your device.',
+    step2: 'Choose the pages to export, the format and the resolution.',
+    step3: 'Generate the images and download a single image or a ZIP with all files.',
+    privacyTitle: 'Local and private export',
+    privacyText: 'The PDF is rendered in the browser with pdf.js. It is never uploaded to a server and the original file is not changed.',
+    limitTitle: 'What this tool extracts',
+    limitText: 'The tool exports rendered pages as images. It does not necessarily extract the original internal image resources embedded in the PDF.',
+    footer: 'Your files are processed locally in your browser.',
+  },
+} as const;
+
+const pageCopy = copy[lang as Lang];
+---
+
+<BaseLayout lang={lang} title={pageCopy.title} description={pageCopy.description} path="extraer-imagenes-pdf">
+  <section class="hero">
+    <span class="badge">{pageCopy.badge}</span>
+    <h1>{pageCopy.h1}</h1>
+    <p class="lead">{pageCopy.lead}</p>
+  </section>
+
+  <ExtractImagesPdfTool client:load lang={lang} />
+
+  <section aria-labelledby="how-title">
+    <h2 id="how-title">{pageCopy.howTitle}</h2>
+    <ol>
+      <li>{pageCopy.step1}</li>
+      <li>{pageCopy.step2}</li>
+      <li>{pageCopy.step3}</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>{pageCopy.privacyTitle}</h2>
+    <p>{pageCopy.privacyText}</p>
+  </section>
+
+  <section>
+    <h2>{pageCopy.limitTitle}</h2>
+    <p>{pageCopy.limitText}</p>
+  </section>
+
+  <Fragment slot="footer">{pageCopy.footer}</Fragment>
+</BaseLayout>
