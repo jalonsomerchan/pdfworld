@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
+import ToolIcon from '../../../components/ToolIcon.astro';
 import { getLocalizedPath, isLang, useTranslations, type Lang } from '../../../i18n/utils';
 import { locales } from '../../../i18n/ui';
 import {
@@ -31,42 +32,136 @@ if (!isToolCategoryId(category)) {
   return Astro.redirect(getLocalizedPath(lang, 'categoria/organizar'));
 }
 
-const t = useTranslations(lang as Lang);
+const currentLang = lang as Lang;
+const t = useTranslations(currentLang);
 const currentCategory = getCategoryById(category);
 const tools = getToolsByCategory(category);
+const availableTools = tools.filter((tool) => tool.status === 'available');
+const popularTools = availableTools.slice(0, 4);
+const copy = currentLang === 'es'
+  ? {
+      eyebrow: 'Categoría PDF',
+      toolsTitle: 'Herramientas de esta categoría',
+      benefitsTitle: 'Por qué usar estas herramientas',
+      faqTitle: 'Preguntas frecuentes',
+      popularTitle: 'Herramientas populares',
+      openTool: 'Abrir herramienta',
+      viewTool: 'Ver ficha',
+      benefits: [
+        'Procesamiento local siempre que la herramienta lo permite, sin subidas innecesarias.',
+        'Flujo rápido desde móvil y escritorio, con acciones claras para descargar el resultado.',
+        'Herramientas agrupadas por intención para encontrar alternativas relacionadas sin perder tiempo.',
+      ],
+      faq: [
+        {
+          question: '¿Mis PDF se suben a algún servidor?',
+          answer: 'La filosofía de FácilPDF es procesar los archivos en el navegador siempre que la herramienta lo permite. Cada herramienta muestra sus límites cuando una operación tiene restricciones técnicas.',
+        },
+        {
+          question: '¿Puedo usar estas herramientas desde el móvil?',
+          answer: 'Sí. Las páginas están preparadas con diseño responsive, botones táctiles y flujos pensados para documentos guardados en el teléfono.',
+        },
+        {
+          question: '¿Qué hago si una herramienta aparece como próximamente?',
+          answer: 'Puedes abrir su ficha para entender el objetivo y usar herramientas relacionadas de la misma categoría mientras se completa la implementación.',
+        },
+      ],
+    }
+  : {
+      eyebrow: 'PDF category',
+      toolsTitle: 'Tools in this category',
+      benefitsTitle: 'Why use these tools',
+      faqTitle: 'Frequently asked questions',
+      popularTitle: 'Popular tools',
+      openTool: 'Open tool',
+      viewTool: 'View page',
+      benefits: [
+        'Local processing whenever the tool supports it, with no unnecessary uploads.',
+        'Fast mobile and desktop flow, with clear actions to download the result.',
+        'Tools grouped by intent so related alternatives are easy to discover.',
+      ],
+      faq: [
+        {
+          question: 'Are my PDFs uploaded to a server?',
+          answer: 'FácilPDF is designed to process files in the browser whenever the tool supports it. Each tool explains its limits when an operation has technical restrictions.',
+        },
+        {
+          question: 'Can I use these tools on mobile?',
+          answer: 'Yes. Pages are responsive, touch-friendly and designed for documents stored on your phone.',
+        },
+        {
+          question: 'What if a tool is marked as soon?',
+          answer: 'You can open its page to understand the goal and use related tools from the same category while implementation is completed.',
+        },
+      ],
+    };
 ---
 
 <BaseLayout
-  lang={lang}
-  title={currentCategory.seo.title[lang]}
-  description={currentCategory.seo.description[lang]}
+  lang={currentLang}
+  title={currentCategory.seo.title[currentLang]}
+  description={currentCategory.seo.description[currentLang]}
   path={`categoria/${currentCategory.id}`}
 >
-  <section class="hero">
-    <span class="badge">{t('home.privacyBadge')}</span>
-    <h1>{currentCategory.title[lang]}</h1>
-    <p class="lead">{currentCategory.description[lang]}</p>
+  <section class="category-hero" aria-labelledby="category-title">
+    <span class="badge">{copy.eyebrow}</span>
+    <div class="category-hero__main">
+      <span class={`category-hero__icon category-hero__icon--${currentCategory.id}`} aria-hidden="true">
+        <ToolIcon name={currentCategory.id} size="lg" />
+      </span>
+      <div>
+        <h1 id="category-title">{currentCategory.title[currentLang]}</h1>
+        <p class="lead">{currentCategory.description[currentLang]}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="category-editorial" aria-labelledby="category-benefits-title">
+    <div class="category-editorial__copy">
+      <h2 id="category-benefits-title">{copy.benefitsTitle}</h2>
+      <ul>
+        {copy.benefits.map((benefit) => <li>{benefit}</li>)}
+      </ul>
+    </div>
+
+    {popularTools.length > 0 && (
+      <aside class="category-popular" aria-labelledby="category-popular-title">
+        <h2 id="category-popular-title">{copy.popularTitle}</h2>
+        <div class="category-popular__links">
+          {popularTools.map((tool) => (
+            <a href={getLocalizedPath(currentLang, tool.route)}>
+              <ToolIcon name={tool.id} size="sm" />
+              <span>{tool.title[currentLang]}</span>
+            </a>
+          ))}
+        </div>
+      </aside>
+    )}
   </section>
 
   <section aria-labelledby="category-tools-title">
-    <h2 id="category-tools-title">{t('category.toolsTitle')}</h2>
+    <h2 id="category-tools-title">{copy.toolsTitle}</h2>
 
     {tools.length > 0 ? (
-      <div class="grid">
+      <div class="grid category-tools-grid">
         {tools.map((tool) => {
           const isAvailable = tool.status === 'available';
-          const href = isAvailable ? getLocalizedPath(lang, tool.route) : undefined;
+          const href = getLocalizedPath(currentLang, tool.route);
           const Tag = isAvailable ? 'a' : 'article';
+          const actionLabel = isAvailable ? copy.openTool : copy.viewTool;
 
           return (
-            <Tag class:list={['tool-card', { 'tool-card--disabled': !isAvailable }]} href={href} aria-disabled={!isAvailable ? 'true' : undefined}>
+            <Tag class:list={['tool-card', { 'tool-card--disabled': !isAvailable }]} href={isAvailable ? href : undefined} aria-disabled={!isAvailable ? 'true' : undefined}>
               <div class="tool-card__title">
-                <span aria-hidden="true">{tool.icon}</span>
-                <strong>{tool.title[lang]}</strong>
+                <span aria-hidden="true"><ToolIcon name={tool.id} size="md" /></span>
+                <strong>{tool.title[currentLang]}</strong>
               </div>
-              <p>{tool.description[lang]}</p>
-              <span class:list={['status-pill', `status-pill--${tool.status}`]}>
-                {toolStatusLabels[tool.status][lang]}
+              <p>{tool.description[currentLang]}</p>
+              <span class="tool-card__footer">
+                <span class:list={['status-pill', `status-pill--${tool.status}`]}>
+                  {toolStatusLabels[tool.status][currentLang]}
+                </span>
+                <span>{actionLabel}</span>
               </span>
             </Tag>
           );
@@ -77,5 +172,156 @@ const tools = getToolsByCategory(category);
     )}
   </section>
 
+  <section class="category-faq" aria-labelledby="category-faq-title">
+    <h2 id="category-faq-title">{copy.faqTitle}</h2>
+    <div class="category-faq__items">
+      {copy.faq.map((item) => (
+        <details>
+          <summary>{item.question}</summary>
+          <p>{item.answer}</p>
+        </details>
+      ))}
+    </div>
+  </section>
+
   <Fragment slot="footer">{t('footer.privacy')}</Fragment>
 </BaseLayout>
+
+<style>
+  .category-hero {
+    display: grid;
+    gap: var(--space-4, 1rem);
+    padding: clamp(2.4rem, 5vw, 4.6rem) 0 clamp(1.5rem, 3vw, 2.4rem);
+  }
+
+  .category-hero__main {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: clamp(1rem, 2.5vw, 1.5rem);
+    align-items: center;
+  }
+
+  .category-hero__icon {
+    display: grid;
+    width: clamp(4.5rem, 8vw, 6.8rem);
+    aspect-ratio: 1;
+    place-items: center;
+    border-radius: var(--radius-2xl, 2rem);
+    background: var(--color-primary-soft, #fee2e2);
+    color: var(--color-primary, #ef4444);
+    box-shadow: var(--shadow-md, 0 18px 48px rgb(15 23 42 / .12));
+  }
+
+  .category-hero h1,
+  .category-hero p {
+    margin: 0;
+  }
+
+  .category-editorial {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(17rem, .8fr);
+    gap: clamp(1rem, 2.5vw, 1.5rem);
+    align-items: stretch;
+    margin: 0 0 clamp(2rem, 4vw, 3rem);
+  }
+
+  .category-editorial__copy,
+  .category-popular,
+  .category-faq details {
+    border: 1px solid var(--color-border, #e2e8f0);
+    border-radius: var(--radius-xl, 1.25rem);
+    background: var(--color-surface-raised, #fff);
+    box-shadow: var(--shadow-sm, 0 14px 36px rgb(15 23 42 / .08));
+  }
+
+  .category-editorial__copy,
+  .category-popular {
+    padding: clamp(1.1rem, 2.5vw, 1.5rem);
+  }
+
+  .category-editorial h2,
+  .category-faq h2 {
+    margin-top: 0;
+  }
+
+  .category-editorial ul {
+    display: grid;
+    gap: .75rem;
+    margin: 0;
+    padding-left: 1.25rem;
+  }
+
+  .category-popular__links {
+    display: grid;
+    gap: .65rem;
+  }
+
+  .category-popular__links a {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    min-height: 2.75rem;
+    padding: .65rem .8rem;
+    border: 1px solid var(--color-border, #e2e8f0);
+    border-radius: var(--radius-md, 1rem);
+    background: var(--color-surface, #fff);
+    color: var(--color-text, #0f172a);
+    font-weight: 850;
+    text-decoration: none;
+  }
+
+  .category-tools-grid .tool-card {
+    display: grid;
+    gap: .85rem;
+  }
+
+  .tool-card__footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .65rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: .35rem;
+  }
+
+  .tool-card__footer > span:last-child {
+    color: var(--color-primary, #ef4444);
+    font-size: .9rem;
+    font-weight: 900;
+  }
+
+  .category-faq {
+    margin-top: clamp(2rem, 4vw, 3rem);
+  }
+
+  .category-faq__items {
+    display: grid;
+    gap: .85rem;
+  }
+
+  .category-faq details {
+    padding: 1rem 1.15rem;
+  }
+
+  .category-faq summary {
+    cursor: pointer;
+    color: var(--color-text, #0f172a);
+    font-weight: 900;
+  }
+
+  .category-faq p {
+    margin: .75rem 0 0;
+    color: var(--color-text-muted, #475569);
+  }
+
+  @media (max-width: 760px) {
+    .category-hero__main,
+    .category-editorial {
+      grid-template-columns: 1fr;
+    }
+
+    .category-hero__icon {
+      width: 5rem;
+    }
+  }
+</style>
