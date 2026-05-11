@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ToolIcon from '../../components/ToolIcon.astro';
+import ToolSearch from '../../components/ToolSearch.svelte';
 import { getLocalizedPath, isLang, useTranslations, type Lang } from '../../i18n/utils';
 import { locales } from '../../i18n/ui';
 import { pdfToolCategories, pdfTools, toolStatusLabels } from '../../data/tools';
@@ -19,14 +20,11 @@ const currentLang = lang as Lang;
 const t = useTranslations(currentLang);
 const totalTools = pdfTools.length;
 const availableTools = pdfTools.filter((tool) => tool.status === 'available').length;
-const filterLabel = currentLang === 'es' ? 'Filtrar herramientas por categoría' : 'Filter tools by category';
 const allLabel = currentLang === 'es' ? 'Todos' : 'All';
 const toolsCountLabel = currentLang === 'es' ? 'herramientas' : 'tools';
 const openToolLabel = currentLang === 'es' ? 'Abrir herramienta' : 'Open tool';
 const soonLabel = currentLang === 'es' ? 'Ver ficha' : 'View page';
-const heroTitle = currentLang === 'es'
-  ? 'Herramientas PDF gratis, rápidas y privadas'
-  : 'Free, fast and private PDF tools';
+const heroTitle = currentLang === 'es' ? 'Herramientas PDF gratis, rápidas y privadas' : 'Free, fast and private PDF tools';
 const heroLead = currentLang === 'es'
   ? 'Une, divide, comprime, convierte y organiza PDFs desde el navegador. Sin instalación, sin esperas y con procesamiento local siempre que la herramienta lo permite.'
   : 'Merge, split, compress, convert and organize PDFs in your browser. No installation, no waiting and local processing whenever the tool supports it.';
@@ -70,13 +68,20 @@ const multitoolCopy = currentLang === 'es'
       badge3: 'Delete pages',
       badge4: 'Extract selection',
     };
+const searchCopy = currentLang === 'es'
+  ? {
+      label: 'Buscar herramientas',
+      placeholder: 'Buscar por nombre, descripción o palabra clave…',
+      empty: 'No hay herramientas que coincidan con tu búsqueda.',
+    }
+  : {
+      label: 'Search tools',
+      placeholder: 'Search by name, description or keyword…',
+      empty: 'No tools match your search.',
+    };
 ---
 
-<BaseLayout
-  lang={currentLang}
-  title={t('seo.home.title')}
-  description={t('seo.home.description')}
->
+<BaseLayout lang={currentLang} title={t('seo.home.title')} description={t('seo.home.description')}>
   <section class="home-hero home-hero--product" aria-labelledby="home-title">
     <span class="home-hero__eyebrow">{heroCopy.badge}</span>
     <h1 id="home-title">{heroTitle}</h1>
@@ -116,20 +121,12 @@ const multitoolCopy = currentLang === 'es'
     <div class="tools-catalog__header">
       <div>
         <h2 id="tools-title">{currentLang === 'es' ? 'Todas las herramientas PDF' : 'All PDF tools'}</h2>
-        <p>{currentLang === 'es' ? 'Elige una herramienta por categoría o abre directamente la que necesites.' : 'Choose a tool by category or open the one you need directly.'}</p>
+        <p>{currentLang === 'es' ? 'Busca por nombre o palabra clave, filtra por categoría y abre la herramienta que necesites.' : 'Search by name or keyword, filter by category and open the tool you need.'}</p>
       </div>
       <span class="tools-count" data-tools-count>{totalTools} {toolsCountLabel}</span>
     </div>
-    <div class="tool-filters" role="group" aria-label={filterLabel}>
-      <button class="tool-filter is-active" type="button" data-tool-filter="all" aria-pressed="true">
-        {allLabel}
-      </button>
-      {pdfToolCategories.map((category) => (
-        <button class="tool-filter" type="button" data-tool-filter={category.id} aria-pressed="false">
-          {category.title[currentLang]}
-        </button>
-      ))}
-    </div>
+
+    <ToolSearch client:load lang={currentLang} categories={pdfToolCategories} allLabel={allLabel} toolsLabel={toolsCountLabel} searchLabel={searchCopy.label} searchPlaceholder={searchCopy.placeholder} emptyText={searchCopy.empty} />
 
     <div class="tools-grid" data-tools-grid>
       {pdfTools.map((tool) => {
@@ -137,6 +134,7 @@ const multitoolCopy = currentLang === 'es'
         const href = getLocalizedPath(currentLang, tool.route);
         const isAvailable = tool.status === 'available';
         const actionLabel = isAvailable ? openToolLabel : soonLabel;
+        const searchText = [tool.title[currentLang], tool.description[currentLang], category.title[currentLang], tool.keywords.join(' ')].join(' ');
 
         return (
           <a
@@ -145,6 +143,7 @@ const multitoolCopy = currentLang === 'es'
             data-tool-card
             data-tool-category={tool.category}
             data-tool-status={tool.status}
+            data-tool-search-text={searchText}
             aria-label={`${tool.title[currentLang]} · ${category.title[currentLang]}`}
           >
             <span class="home-tool-card__icon" aria-hidden="true">
@@ -154,9 +153,7 @@ const multitoolCopy = currentLang === 'es'
             <strong>{tool.title[currentLang]}</strong>
             <span class="home-tool-card__description">{tool.description[currentLang]}</span>
             <span class="home-tool-card__footer">
-              <span class:list={['status-pill', `status-pill--${tool.status}`]}>
-                {toolStatusLabels[tool.status][currentLang]}
-              </span>
+              <span class:list={['status-pill', `status-pill--${tool.status}`]}>{toolStatusLabels[tool.status][currentLang]}</span>
               <span class="home-tool-card__action">{actionLabel}</span>
             </span>
           </a>
@@ -189,215 +186,10 @@ const multitoolCopy = currentLang === 'es'
         });
       });
     }
-
-    const filterButtons = Array.from(document.querySelectorAll('[data-tool-filter]'));
-    const toolCards = Array.from(document.querySelectorAll('[data-tool-card]'));
-    const countOutput = document.querySelector('[data-tools-count]');
-    const toolsLabel = document.documentElement.lang === 'es' ? 'herramientas' : 'tools';
-
-    filterButtons.forEach((button) => {
-      button.addEventListener('click', () => {
-        const selectedCategory = button.getAttribute('data-tool-filter');
-        let visibleTools = 0;
-
-        filterButtons.forEach((item) => {
-          const isActive = item === button;
-          item.classList.toggle('is-active', isActive);
-          item.setAttribute('aria-pressed', String(isActive));
-        });
-
-        toolCards.forEach((card) => {
-          const shouldShow = selectedCategory === 'all' || card.getAttribute('data-tool-category') === selectedCategory;
-          card.toggleAttribute('hidden', !shouldShow);
-          if (shouldShow) visibleTools += 1;
-        });
-
-        if (countOutput) {
-          countOutput.textContent = `${visibleTools} ${toolsLabel}`;
-        }
-      });
-    });
   </script>
 
   <style>
-    .home-hero--product {
-      padding-bottom: clamp(2rem, 4vw, 3rem);
-    }
-
-    .home-hero__actions {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: .75rem;
-      margin-top: .35rem;
-    }
-
-    .home-hero__cta {
-      display: inline-flex;
-      min-height: 3rem;
-      align-items: center;
-      justify-content: center;
-      padding: .85rem 1.2rem;
-      border-radius: 999px;
-      font-weight: 950;
-      text-align: center;
-      text-decoration: none;
-      transition: transform var(--transition-fast, 120ms ease), box-shadow var(--transition-base, 180ms ease), background var(--transition-base, 180ms ease);
-    }
-
-    .home-hero__cta:hover,
-    .home-hero__cta:focus-visible {
-      transform: translateY(-1px);
-    }
-
-    .home-hero__cta--primary {
-      background: linear-gradient(135deg, var(--color-primary, #2563eb), var(--color-secondary, #7c3aed));
-      color: #fff;
-      box-shadow: var(--shadow-sm, 0 4px 12px rgb(15 23 42 / .08));
-    }
-
-    .home-hero__cta--primary:hover,
-    .home-hero__cta--primary:focus-visible {
-      color: #fff;
-      box-shadow: var(--shadow-md, 0 12px 32px rgb(15 23 42 / .12));
-    }
-
-    .home-hero__cta--secondary {
-      border: 1px solid var(--color-border, #e2e8f0);
-      background: var(--color-surface, #fff);
-      color: var(--color-text, #0f172a);
-    }
-
-    .featured-multitool {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: clamp(1.2rem, 3vw, 2rem);
-      align-items: center;
-      margin: clamp(1.5rem, 4vw, 3rem) 0;
-      padding: clamp(1.4rem, 4vw, 2.4rem);
-      border: 1px solid var(--color-border, #e2e8f0);
-      border-radius: var(--radius-2xl, 1.5rem);
-      background:
-        radial-gradient(circle at 10% 0%, color-mix(in srgb, var(--color-primary, #2563eb) 16%, transparent), transparent 18rem),
-        linear-gradient(135deg, var(--color-surface-raised, #fff), var(--color-surface-soft, #f1f5f9));
-      box-shadow: var(--shadow-md, 0 18px 48px rgb(15 23 42 / .12));
-    }
-
-    .featured-multitool__content {
-      display: grid;
-      gap: .85rem;
-    }
-
-    .featured-multitool__eyebrow {
-      width: fit-content;
-      padding: .35rem .7rem;
-      border-radius: 999px;
-      background: var(--color-primary-soft, #dbeafe);
-      color: var(--color-primary, #2563eb);
-      font-size: .78rem;
-      font-weight: 950;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-    }
-
-    .featured-multitool h2,
-    .featured-multitool p {
-      margin: 0;
-    }
-
-    .featured-multitool h2 {
-      color: var(--color-text, #0f172a);
-      font-size: clamp(1.7rem, 4vw, 3rem);
-      line-height: .98;
-      letter-spacing: -.055em;
-    }
-
-    .featured-multitool p {
-      max-width: 48rem;
-      color: var(--color-text-muted, #475569);
-      font-size: clamp(1rem, 1.8vw, 1.18rem);
-    }
-
-    .featured-multitool__badges {
-      display: flex;
-      flex-wrap: wrap;
-      gap: .55rem;
-    }
-
-    .featured-multitool__badges span {
-      padding: .42rem .75rem;
-      border: 1px solid var(--color-border, #e2e8f0);
-      border-radius: 999px;
-      background: var(--color-surface, #fff);
-      color: var(--color-text, #0f172a);
-      font-weight: 850;
-      font-size: .88rem;
-    }
-
-    .featured-multitool__cta {
-      display: inline-flex;
-      width: fit-content;
-      min-height: 3rem;
-      align-items: center;
-      justify-content: center;
-      padding: .85rem 1.2rem;
-      border-radius: 999px;
-      background: linear-gradient(135deg, var(--color-primary, #2563eb), var(--color-secondary, #7c3aed));
-      color: #fff;
-      font-weight: 950;
-      text-decoration: none;
-      box-shadow: var(--shadow-sm, 0 4px 12px rgb(15 23 42 / .08));
-    }
-
-    .featured-multitool__visual {
-      display: grid;
-      width: clamp(8rem, 18vw, 13rem);
-      aspect-ratio: 1;
-      place-items: center;
-      border-radius: 2rem;
-      background: var(--color-surface, #fff);
-      box-shadow: var(--shadow-lg, 0 24px 70px rgb(15 23 42 / .18));
-      transform: rotate(3deg);
-      color: var(--color-primary, #2563eb);
-    }
-
-    .featured-multitool__visual strong {
-      color: var(--color-text, #0f172a);
-      font-size: clamp(1.5rem, 4vw, 2.6rem);
-      line-height: 1;
-    }
-
-    .featured-multitool__visual small {
-      color: var(--color-text-muted, #475569);
-      font-weight: 850;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-    }
-
-    .home-tool-card--featured {
-      border-color: color-mix(in srgb, var(--color-primary, #2563eb) 45%, var(--color-border, #e2e8f0));
-      box-shadow: 0 18px 48px rgb(37 99 235 / .16);
-    }
-
-    @media (max-width: 760px) {
-      .home-hero__actions,
-      .home-hero__cta {
-        width: 100%;
-      }
-
-      .featured-multitool {
-        grid-template-columns: 1fr;
-      }
-
-      .featured-multitool__visual {
-        width: min(100%, 12rem);
-        justify-self: start;
-      }
-
-      .featured-multitool__cta {
-        width: 100%;
-      }
-    }
+    .home-hero--product{padding-bottom:clamp(2rem,4vw,3rem)}.home-hero__actions{display:flex;flex-wrap:wrap;justify-content:center;gap:.75rem;margin-top:.35rem}.home-hero__cta{display:inline-flex;min-height:3rem;align-items:center;justify-content:center;padding:.85rem 1.2rem;border-radius:999px;font-weight:950;text-align:center;text-decoration:none;transition:transform var(--transition-fast,120ms ease),box-shadow var(--transition-base,180ms ease),background var(--transition-base,180ms ease)}.home-hero__cta:hover,.home-hero__cta:focus-visible{transform:translateY(-1px)}.home-hero__cta--primary{background:linear-gradient(135deg,var(--color-primary,#2563eb),var(--color-secondary,#7c3aed));color:#fff;box-shadow:var(--shadow-sm,0 4px 12px rgb(15 23 42 / .08))}.home-hero__cta--primary:hover,.home-hero__cta--primary:focus-visible{color:#fff;box-shadow:var(--shadow-md,0 12px 32px rgb(15 23 42 / .12))}.home-hero__cta--secondary{border:1px solid var(--color-border,#e2e8f0);background:var(--color-surface,#fff);color:var(--color-text,#0f172a)}.featured-multitool{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:clamp(1.2rem,3vw,2rem);align-items:center;margin:clamp(1.5rem,4vw,3rem) 0;padding:clamp(1.4rem,4vw,2.4rem);border:1px solid var(--color-border,#e2e8f0);border-radius:var(--radius-2xl,1.5rem);background:radial-gradient(circle at 10% 0%,color-mix(in srgb,var(--color-primary,#2563eb) 16%,transparent),transparent 18rem),linear-gradient(135deg,var(--color-surface-raised,#fff),var(--color-surface-soft,#f1f5f9));box-shadow:var(--shadow-md,0 18px 48px rgb(15 23 42 / .12))}.featured-multitool__content{display:grid;gap:.85rem}.featured-multitool__eyebrow{width:fit-content;padding:.35rem .7rem;border-radius:999px;background:var(--color-primary-soft,#dbeafe);color:var(--color-primary,#2563eb);font-size:.78rem;font-weight:950;letter-spacing:.08em;text-transform:uppercase}.featured-multitool h2,.featured-multitool p{margin:0}.featured-multitool h2{color:var(--color-text,#0f172a);font-size:clamp(1.7rem,4vw,3rem);line-height:.98;letter-spacing:-.055em}.featured-multitool p{max-width:48rem;color:var(--color-text-muted,#475569);font-size:clamp(1rem,1.8vw,1.18rem)}.featured-multitool__badges{display:flex;flex-wrap:wrap;gap:.55rem}.featured-multitool__badges span{padding:.42rem .75rem;border:1px solid var(--color-border,#e2e8f0);border-radius:999px;background:var(--color-surface,#fff);color:var(--color-text,#0f172a);font-weight:850;font-size:.88rem}.featured-multitool__cta{display:inline-flex;width:fit-content;min-height:3rem;align-items:center;justify-content:center;padding:.85rem 1.2rem;border-radius:999px;background:linear-gradient(135deg,var(--color-primary,#2563eb),var(--color-secondary,#7c3aed));color:#fff;font-weight:950;text-decoration:none;box-shadow:var(--shadow-sm,0 4px 12px rgb(15 23 42 / .08))}.featured-multitool__visual{display:grid;width:clamp(8rem,18vw,13rem);aspect-ratio:1;place-items:center;border-radius:2rem;background:var(--color-surface,#fff);box-shadow:var(--shadow-lg,0 24px 70px rgb(15 23 42 / .18));transform:rotate(3deg);color:var(--color-primary,#2563eb)}.featured-multitool__visual strong{color:var(--color-text,#0f172a);font-size:clamp(1.5rem,4vw,2.6rem);line-height:1}.featured-multitool__visual small{color:var(--color-text-muted,#475569);font-weight:850;text-transform:uppercase;letter-spacing:.08em}.home-tool-card--featured{border-color:color-mix(in srgb,var(--color-primary,#2563eb) 45%,var(--color-border,#e2e8f0));box-shadow:0 18px 48px rgb(37 99 235 / .16)}@media(max-width:760px){.home-hero__actions,.home-hero__cta{width:100%}.featured-multitool{grid-template-columns:1fr}.featured-multitool__visual{width:min(100%,12rem);justify-self:start}.featured-multitool__cta{width:100%}}
   </style>
 
   <Fragment slot="footer">{t('footer.privacy')}</Fragment>
