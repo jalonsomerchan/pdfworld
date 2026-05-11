@@ -30,9 +30,11 @@ export default tseslint.config(
   },
   {
     files: ['**/*.astro'],
-    parserOptions: {
-      parser: tseslint.parser,
-      extraFileExtensions: ['.astro'],
+    languageOptions: {
+      parserOptions: {
+        parser: tseslint.parser,
+        extraFileExtensions: ['.astro'],
+      },
     },
   },
 );
