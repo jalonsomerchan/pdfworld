@@ -140,6 +140,22 @@ const multitoolCopy = currentLang === 'es'
   </section>
 
   <script>
+    const manifestHref = '/manifest.webmanifest';
+    if (!document.querySelector(`link[rel="manifest"][href="${manifestHref}"]`)) {
+      const manifestLink = document.createElement('link');
+      manifestLink.rel = 'manifest';
+      manifestLink.href = manifestHref;
+      document.head.append(manifestLink);
+    }
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {
+          // PWA registration must never block the PDF tools.
+        });
+      });
+    }
+
     const filterButtons = Array.from(document.querySelectorAll('[data-tool-filter]'));
     const toolCards = Array.from(document.querySelectorAll('[data-tool-card]'));
     const countOutput = document.querySelector('[data-tools-count]');
