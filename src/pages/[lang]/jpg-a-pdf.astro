@@ -1,0 +1,75 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ImagesToPdfTool from '../../components/ImagesToPdfTool.svelte';
+import { getLocalizedPath, isLang, type Lang } from '../../i18n/utils';
+import { locales } from '../../i18n/ui';
+
+export function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params;
+
+if (!isLang(lang)) {
+  return Astro.redirect(getLocalizedPath('es', 'jpg-a-pdf'));
+}
+
+const copy = {
+  es: {
+    title: 'Convertir JPG a PDF online gratis y privado',
+    description: 'Convierte imágenes JPG en un PDF desde el navegador, sin subir archivos a servidores.',
+    badge: 'JPG a PDF · Sin subidas · En tu navegador',
+    h1: 'Convertir JPG a PDF',
+    lead: 'Selecciona una o varias imágenes JPG, ordénalas, elige tamaño y orientación de página, y descarga un PDF listo para compartir.',
+    howTitle: 'Cómo convertir JPG a PDF',
+    step1: 'Añade una o varias imágenes JPG desde tu dispositivo.',
+    step2: 'Ordena las imágenes y ajusta el tamaño u orientación del PDF.',
+    step3: 'Genera la vista previa y descarga el documento PDF.',
+    privacyTitle: 'Conversión local y privada',
+    privacyText: 'Las imágenes se convierten en tu navegador con pdf-lib. No se suben a servidores y el archivo original no se modifica.',
+    footer: 'Tus imágenes se procesan localmente en tu navegador.',
+  },
+  en: {
+    title: 'Convert JPG to PDF online for free and privately',
+    description: 'Convert JPG images into a PDF from the browser, without uploading files to servers.',
+    badge: 'JPG to PDF · No uploads · In your browser',
+    h1: 'Convert JPG to PDF',
+    lead: 'Select one or more JPG images, reorder them, choose page size and orientation, then download a PDF ready to share.',
+    howTitle: 'How to convert JPG to PDF',
+    step1: 'Add one or more JPG images from your device.',
+    step2: 'Reorder the images and adjust PDF page size or orientation.',
+    step3: 'Generate the preview and download the PDF document.',
+    privacyTitle: 'Local and private conversion',
+    privacyText: 'Images are converted in your browser with pdf-lib. They are not uploaded to servers and the original files are not changed.',
+    footer: 'Your images are processed locally in your browser.',
+  },
+} as const;
+
+const pageCopy = copy[lang as Lang];
+---
+
+<BaseLayout lang={lang} title={pageCopy.title} description={pageCopy.description} path="jpg-a-pdf">
+  <section class="hero">
+    <span class="badge">{pageCopy.badge}</span>
+    <h1>{pageCopy.h1}</h1>
+    <p class="lead">{pageCopy.lead}</p>
+  </section>
+
+  <ImagesToPdfTool client:load lang={lang} />
+
+  <section aria-labelledby="how-title">
+    <h2 id="how-title">{pageCopy.howTitle}</h2>
+    <ol>
+      <li>{pageCopy.step1}</li>
+      <li>{pageCopy.step2}</li>
+      <li>{pageCopy.step3}</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>{pageCopy.privacyTitle}</h2>
+    <p>{pageCopy.privacyText}</p>
+  </section>
+
+  <Fragment slot="footer">{pageCopy.footer}</Fragment>
+</BaseLayout>
