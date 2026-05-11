@@ -1,0 +1,75 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageNumbersPdfTool from '../../components/PageNumbersPdfTool.svelte';
+import { getLocalizedPath, isLang, type Lang } from '../../i18n/utils';
+import { locales } from '../../i18n/ui';
+
+export function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params;
+
+if (!isLang(lang)) {
+  return Astro.redirect(getLocalizedPath('es', 'numerar-paginas-pdf'));
+}
+
+const copy = {
+  es: {
+    title: 'Numerar páginas PDF online gratis y privado',
+    description: 'Añade números de página a un PDF desde el navegador, con formato, posición, tamaño y margen configurables.',
+    badge: '100% privado · Sin subidas · En tu navegador',
+    h1: 'Numerar páginas PDF',
+    lead: 'Carga un PDF, elige el formato de numeración, posición, tamaño, margen y página inicial, y descarga una copia nueva con números visibles.',
+    howTitle: 'Cómo numerar páginas de un PDF',
+    step1: 'Selecciona un archivo PDF desde tu dispositivo.',
+    step2: 'Configura el texto, posición, tamaño, margen y la página donde empieza la numeración.',
+    step3: 'Genera la vista previa y descarga el PDF numerado.',
+    privacyTitle: 'Numeración local y privada',
+    privacyText: 'La numeración se añade en el navegador con pdf-lib. El documento original no se modifica ni se envía a ningún servidor.',
+    footer: 'Tus archivos se procesan localmente en tu navegador.',
+  },
+  en: {
+    title: 'Add page numbers to PDF online for free and privately',
+    description: 'Add page numbers to a PDF from the browser with configurable format, position, size and margin.',
+    badge: '100% private · No uploads · In your browser',
+    h1: 'Add page numbers to PDF',
+    lead: 'Load a PDF, choose the numbering format, position, size, margin and start page, then download a new copy with visible page numbers.',
+    howTitle: 'How to add page numbers to a PDF',
+    step1: 'Select a PDF file from your device.',
+    step2: 'Configure the text, position, size, margin and the page where numbering starts.',
+    step3: 'Generate the preview and download the numbered PDF.',
+    privacyTitle: 'Local and private numbering',
+    privacyText: 'Page numbers are added in the browser with pdf-lib. The original document is not changed and is never sent to a server.',
+    footer: 'Your files are processed locally in your browser.',
+  },
+} as const;
+
+const pageCopy = copy[lang as Lang];
+---
+
+<BaseLayout lang={lang} title={pageCopy.title} description={pageCopy.description} path="numerar-paginas-pdf">
+  <section class="hero">
+    <span class="badge">{pageCopy.badge}</span>
+    <h1>{pageCopy.h1}</h1>
+    <p class="lead">{pageCopy.lead}</p>
+  </section>
+
+  <PageNumbersPdfTool client:load lang={lang} />
+
+  <section aria-labelledby="how-title">
+    <h2 id="how-title">{pageCopy.howTitle}</h2>
+    <ol>
+      <li>{pageCopy.step1}</li>
+      <li>{pageCopy.step2}</li>
+      <li>{pageCopy.step3}</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>{pageCopy.privacyTitle}</h2>
+    <p>{pageCopy.privacyText}</p>
+  </section>
+
+  <Fragment slot="footer">{pageCopy.footer}</Fragment>
+</BaseLayout>
