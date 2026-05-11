@@ -27,6 +27,12 @@
   let privacyHref = '/es/privacidad';
   let privacyText = 'Tus archivos se procesan en este navegador. Ver privacidad';
   let currentLang: PdfToolLang = 'es';
+  const inputId = `pdf-dropzone-input-${Math.random().toString(36).slice(2)}`;
+  const helpId = `pdf-dropzone-help-${Math.random().toString(36).slice(2)}`;
+  const statusId = `pdf-dropzone-status-${Math.random().toString(36).slice(2)}`;
+
+  $: currentTitle = isDragging ? activeTitle : title;
+  $: statusText = selectedLabel || subtitle;
 
   onMount(() => {
     currentLang = document.documentElement.lang === 'en' ? 'en' : 'es';
@@ -120,7 +126,9 @@
     type="button"
     class:pdf-dropzone={true}
     class:pdf-dropzone--active={isDragging}
-    aria-describedby="pdf-dropzone-help"
+    aria-controls={inputId}
+    aria-describedby={`${helpId} ${statusId}`}
+    aria-label={`${currentTitle}. ${statusText}`}
     on:click={openFileDialog}
     on:drop={handleDrop}
     on:dragenter={handleDragEnter}
@@ -134,9 +142,9 @@
       <span class="pdf-dropzone__icon-card pdf-dropzone__icon-card--front">+</span>
     </span>
     <span class="pdf-dropzone__copy">
-      <strong>{isDragging ? activeTitle : title}</strong>
-      <span>{selectedLabel || subtitle}</span>
-      <small id="pdf-dropzone-help">{help}</small>
+      <strong>{currentTitle}</strong>
+      <span id={statusId} aria-live="polite">{statusText}</span>
+      <small id={helpId}>{help}</small>
     </span>
   </button>
 
@@ -146,11 +154,14 @@
 </div>
 
 <input
+  id={inputId}
   bind:this={inputElement}
   class="pdf-dropzone__input"
   type="file"
   {accept}
   {multiple}
+  aria-describedby={helpId}
+  aria-label={title}
   on:change={handleInputChange}
 />
 
