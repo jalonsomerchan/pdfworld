@@ -37,7 +37,7 @@ export const PDF_TOOL_ERROR_MESSAGES = {
     totalTooLarge: (size: string, limit: string) => `The selected files are ${size}. Reduce the selection below ${limit}.`,
     password: 'The PDF is password-protected or does not allow this browser operation.',
     damaged: 'The PDF seems to be damaged or is not a valid PDF file.',
-    memory: 'The browser does not have enough memory to complete the operation. Try a smaller PDF or split the work into several steps.',
+    memory: 'The browser does not have enough memory to complete the operation. Try a smaller PDF or split the work in several steps.',
     unsupported: 'Your browser cannot complete this operation. Update it or try another modern browser.',
     unknown: 'The operation could not be completed. Check that the PDF is not damaged, protected or too large.',
   },
@@ -52,12 +52,20 @@ export function formatFileSize(bytes: number) {
   return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
 }
 
+export function getPdfToolLimits(options: PdfToolLimitOptions = {}) {
+  return {
+    maxFileSize: options.maxFileSize ?? DEFAULT_PDF_TOOL_LIMITS.maxFileSize,
+    maxTotalSize: options.maxTotalSize ?? DEFAULT_PDF_TOOL_LIMITS.maxTotalSize,
+    maxFiles: options.maxFiles ?? DEFAULT_PDF_TOOL_LIMITS.maxFiles,
+  };
+}
+
 export function validatePdfFiles(
   files: File[],
   options: PdfToolLimitOptions = {},
   lang: PdfToolLang = 'es',
 ): PdfToolValidationResult {
-  const limits = { ...DEFAULT_PDF_TOOL_LIMITS, ...options };
+  const limits = getPdfToolLimits(options);
   const messages = PDF_TOOL_ERROR_MESSAGES[lang] ?? PDF_TOOL_ERROR_MESSAGES.es;
   const errors = new Set<string>();
   const totalSize = files.reduce((sum, file) => sum + file.size, 0);
