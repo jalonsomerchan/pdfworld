@@ -1,0 +1,129 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getLocalizedPath, isLang, type Lang } from '../../i18n/utils';
+import { locales } from '../../i18n/ui';
+
+export function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params;
+
+if (!isLang(lang)) {
+  return Astro.redirect(getLocalizedPath('es', 'desbloquear-pdf'));
+}
+
+const copy = {
+  es: {
+    title: 'Desbloquear PDF con contraseña conocida: límites en navegador',
+    description: 'Información clara sobre desbloquear PDFs solo cuando conoces la contraseña y las limitaciones técnicas de hacerlo en navegador sin backend.',
+    badge: 'Seguridad PDF · Solo con permiso',
+    h1: 'Desbloquear PDF con contraseña conocida',
+    lead: 'Esta página explica el enfoque seguro de FácilPDF: solo se contempla abrir PDFs cuando el usuario conoce la contraseña. No se implementa fuerza bruta, cracking ni bypass de protecciones.',
+    statusTitle: 'Estado de la herramienta',
+    statusText: 'La lectura de PDFs protegidos con contraseña puede funcionar en algunos visores basados en pdf.js, pero generar una copia realmente desbloqueada y compatible desde el navegador no es fiable con las librerías actuales del proyecto.',
+    allowedTitle: 'Qué sí sería aceptable',
+    allowedItems: [
+      'Permitir introducir una contraseña conocida por el usuario.',
+      'Intentar abrir el documento localmente en el navegador.',
+      'Exportar una copia solo si una librería frontend demuestra soporte real y fiable.',
+      'Mostrar errores claros cuando el PDF no se pueda procesar.',
+    ],
+    forbiddenTitle: 'Qué no hará FácilPDF',
+    forbiddenItems: [
+      'No probará contraseñas automáticamente.',
+      'No hará fuerza bruta ni diccionarios.',
+      'No saltará restricciones de documentos sin permiso.',
+      'No enviará el PDF a servidores externos para desbloquearlo.',
+    ],
+    recommendationTitle: 'Recomendación actual',
+    recommendationText: 'Si tienes la contraseña y necesitas una copia sin bloqueo, usa una herramienta de escritorio de confianza o el visor/editor que creó el PDF. Verifica siempre que tienes permiso para modificar el documento.',
+    futureTitle: 'Implementación futura',
+    futureText: 'La ruta queda preparada para integrar una solución local si se valida una librería que pueda abrir con contraseña conocida y exportar una copia compatible sin backend.',
+    footer: 'FácilPDF no ayuda a romper contraseñas ni a saltar permisos de documentos.',
+  },
+  en: {
+    title: 'Unlock PDF with known password: browser limits',
+    description: 'Clear information about unlocking PDFs only when you know the password and the technical limits of doing it in the browser without a backend.',
+    badge: 'PDF security · Permission only',
+    h1: 'Unlock PDF with a known password',
+    lead: 'This page explains FácilPDF’s safe approach: only opening PDFs when the user knows the password is considered. No brute force, cracking or protection bypass is implemented.',
+    statusTitle: 'Tool status',
+    statusText: 'Reading password-protected PDFs may work in some pdf.js-based viewers, but generating a truly unlocked and compatible copy from the browser is not reliable with the current project libraries.',
+    allowedTitle: 'What would be acceptable',
+    allowedItems: [
+      'Allow entering a password known by the user.',
+      'Try to open the document locally in the browser.',
+      'Export a copy only if a frontend library proves real and reliable support.',
+      'Show clear errors when the PDF cannot be processed.',
+    ],
+    forbiddenTitle: 'What FácilPDF will not do',
+    forbiddenItems: [
+      'It will not try passwords automatically.',
+      'It will not perform brute force or dictionary attacks.',
+      'It will not bypass document restrictions without permission.',
+      'It will not send the PDF to external servers to unlock it.',
+    ],
+    recommendationTitle: 'Current recommendation',
+    recommendationText: 'If you have the password and need an unlocked copy, use a trusted desktop tool or the viewer/editor that created the PDF. Always verify that you have permission to modify the document.',
+    futureTitle: 'Future implementation',
+    futureText: 'This route is ready for a local solution if a library is validated that can open with a known password and export a compatible copy without backend.',
+    footer: 'FácilPDF does not help break passwords or bypass document permissions.',
+  },
+} as const;
+
+const pageCopy = copy[lang as Lang];
+---
+
+<BaseLayout lang={lang} title={pageCopy.title} description={pageCopy.description} path="desbloquear-pdf">
+  <section class="hero unlock-hero">
+    <span class="badge">{pageCopy.badge}</span>
+    <h1>{pageCopy.h1}</h1>
+    <p class="lead">{pageCopy.lead}</p>
+  </section>
+
+  <section class="unlock-panel unlock-panel--status" aria-labelledby="status-title">
+    <span aria-hidden="true">🔓</span>
+    <div>
+      <h2 id="status-title">{pageCopy.statusTitle}</h2>
+      <p>{pageCopy.statusText}</p>
+    </div>
+  </section>
+
+  <section class="unlock-grid">
+    <article>
+      <h2>{pageCopy.allowedTitle}</h2>
+      <ul>
+        {pageCopy.allowedItems.map((item) => <li>{item}</li>)}
+      </ul>
+    </article>
+    <article>
+      <h2>{pageCopy.forbiddenTitle}</h2>
+      <ul>
+        {pageCopy.forbiddenItems.map((item) => <li>{item}</li>)}
+      </ul>
+    </article>
+  </section>
+
+  <section class="unlock-panel" aria-labelledby="recommendation-title">
+    <span aria-hidden="true">✅</span>
+    <div>
+      <h2 id="recommendation-title">{pageCopy.recommendationTitle}</h2>
+      <p>{pageCopy.recommendationText}</p>
+    </div>
+  </section>
+
+  <section class="unlock-panel" aria-labelledby="future-title">
+    <span aria-hidden="true">🧪</span>
+    <div>
+      <h2 id="future-title">{pageCopy.futureTitle}</h2>
+      <p>{pageCopy.futureText}</p>
+    </div>
+  </section>
+
+  <style>
+    .unlock-hero{padding-bottom:clamp(1.5rem,4vw,2.8rem)}.unlock-panel{display:grid;grid-template-columns:auto 1fr;gap:1rem;margin:1.2rem 0;padding:clamp(1.1rem,3vw,1.7rem);border:1px solid var(--color-border,#e2e8f0);border-radius:var(--radius-2xl,1.5rem);background:var(--color-surface,#fff);box-shadow:var(--shadow-sm,0 10px 28px rgb(15 23 42 / .08))}.unlock-panel--status{background:linear-gradient(135deg,#eff6ff,#fff)}.unlock-panel>span{display:grid;width:3.2rem;height:3.2rem;place-items:center;border-radius:1rem;background:#eff6ff;font-size:1.7rem}.unlock-panel h2,.unlock-panel p{margin-top:0}.unlock-panel p{color:var(--color-text-muted,#475569)}.unlock-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin:1.2rem 0}.unlock-grid article{padding:clamp(1rem,3vw,1.45rem);border:1px solid var(--color-border,#e2e8f0);border-radius:var(--radius-xl,1.25rem);background:var(--color-surface-soft,#f8fafc)}.unlock-grid h2{margin-top:0}.unlock-grid ul{margin:.35rem 0 0;padding-left:1.2rem;color:var(--color-text-muted,#475569)}.unlock-grid li+li{margin-top:.45rem}@media(max-width:820px){.unlock-panel,.unlock-grid{grid-template-columns:1fr}.unlock-panel>span{width:2.8rem;height:2.8rem}}
+  </style>
+
+  <Fragment slot="footer">{pageCopy.footer}</Fragment>
+</BaseLayout>
