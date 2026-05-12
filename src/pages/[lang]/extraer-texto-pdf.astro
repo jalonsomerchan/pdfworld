@@ -1,6 +1,6 @@
 ---
 import ExtractTextPdfTool from '../../components/ExtractTextPdfTool.svelte';
-import BaseLayout from '../../layouts/BaseLayout.astro';
+import ToolPageLayout from '../../layouts/ToolPageLayout.astro';
 import { isLang, useTranslations, type Lang } from '../../i18n/utils';
 import { locales } from '../../i18n/ui';
 
@@ -23,54 +23,45 @@ const copy = currentLang === 'es'
       description: 'Extrae el texto seleccionable de un PDF directamente en tu navegador, sin subir archivos y sin backend. Copia el resultado o descárgalo como TXT.',
       h1: 'Extraer texto de PDF online',
       lead: 'Selecciona un PDF con capa de texto y obtén el contenido agrupado por páginas. Todo se procesa localmente en tu navegador.',
-      howTitle: 'Cómo extraer texto de un PDF',
-      step1: 'Selecciona un archivo PDF desde tu dispositivo.',
-      step2: 'La herramienta recorre sus páginas con pdf.js y extrae el texto seleccionable.',
-      step3: 'Copia el resultado completo o descárgalo como archivo .txt.',
-      privacyTitle: 'Extraer texto PDF sin subir archivos',
-      privacyText: 'El PDF se lee en el navegador. No se envía a servidores y no se aplica OCR: si el documento está escaneado o solo contiene imágenes, se mostrará un aviso claro.',
+      steps: [
+        { text: 'Selecciona un archivo PDF desde tu dispositivo.' },
+        { text: 'La herramienta recorre sus páginas con pdf.js y extrae el texto seleccionable.' },
+        { text: 'Copia el resultado completo o descárgalo como archivo .txt.' },
+      ],
+      infoBlocks: [
+        { title: 'Extraer texto PDF sin subir archivos', text: 'El PDF se lee en el navegador. No se envía a servidores y no se aplica OCR.' },
+        { title: 'Sin OCR', text: 'Si el documento está escaneado o solo contiene imágenes, la herramienta mostrará un aviso claro en lugar de inventar texto.' },
+      ],
     }
   : {
       title: 'Extract PDF text online for free and privately',
       description: 'Extract selectable text from a PDF directly in your browser, without uploads or backend. Copy the result or download it as TXT.',
       h1: 'Extract PDF text online',
       lead: 'Select a PDF with a text layer and get the content grouped by page. Everything is processed locally in your browser.',
-      howTitle: 'How to extract text from a PDF',
-      step1: 'Select a PDF file from your device.',
-      step2: 'The tool walks through its pages with pdf.js and extracts selectable text.',
-      step3: 'Copy the full result or download it as a .txt file.',
-      privacyTitle: 'Extract PDF text without uploads',
-      privacyText: 'The PDF is read in the browser. It is not sent to servers and OCR is not applied: if the document is scanned or image-only, a clear warning is shown.',
+      steps: [
+        { text: 'Select a PDF file from your device.' },
+        { text: 'The tool walks through its pages with pdf.js and extracts selectable text.' },
+        { text: 'Copy the full result or download it as a .txt file.' },
+      ],
+      infoBlocks: [
+        { title: 'Extract PDF text without uploads', text: 'The PDF is read in the browser. It is not sent to servers and OCR is not applied.' },
+        { title: 'No OCR', text: 'If the document is scanned or image-only, the tool will show a clear warning instead of inventing text.' },
+      ],
     };
 ---
 
-<BaseLayout
+<ToolPageLayout
   lang={currentLang}
   title={copy.title}
   description={copy.description}
   path="extraer-texto-pdf"
+  toolId="extract-text-pdf"
+  badge={t('home.privacyBadge')}
+  h1={copy.h1}
+  lead={copy.lead}
+  steps={copy.steps}
+  infoBlocks={copy.infoBlocks}
+  footer={t('footer.privacy')}
 >
-  <section class="hero">
-    <span class="badge">{t('home.privacyBadge')}</span>
-    <h1>{copy.h1}</h1>
-    <p class="lead">{copy.lead}</p>
-  </section>
-
   <ExtractTextPdfTool client:load lang={currentLang} />
-
-  <section aria-labelledby="how-title">
-    <h2 id="how-title">{copy.howTitle}</h2>
-    <ol>
-      <li>{copy.step1}</li>
-      <li>{copy.step2}</li>
-      <li>{copy.step3}</li>
-    </ol>
-  </section>
-
-  <section>
-    <h2>{copy.privacyTitle}</h2>
-    <p>{copy.privacyText}</p>
-  </section>
-
-  <Fragment slot="footer">{t('footer.privacy')}</Fragment>
-</BaseLayout>
+</ToolPageLayout>
