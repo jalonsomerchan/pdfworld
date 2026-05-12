@@ -1,6 +1,6 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
 import RotatePdfTool from '../../components/RotatePdfToolProFixed.svelte';
+import ToolPageLayout from '../../layouts/ToolPageLayout.astro';
 import { getLocalizedPath, isLang, type Lang } from '../../i18n/utils';
 import { locales } from '../../i18n/ui';
 
@@ -14,6 +14,7 @@ if (!isLang(lang)) {
   return Astro.redirect(getLocalizedPath('es', 'rotar-pdf'));
 }
 
+const currentLang = lang as Lang;
 const copy = {
   es: {
     title: 'Rotar PDF online gratis y privado',
@@ -21,12 +22,15 @@ const copy = {
     badge: '100% privado · Sin subidas · En tu navegador',
     h1: 'Rotar PDF online',
     lead: 'Visualiza miniaturas de cada página, gira páginas individuales o todo el documento y descarga una copia nueva del PDF rotado.',
-    howTitle: 'Cómo rotar un PDF',
-    step1: 'Selecciona un archivo PDF desde tu dispositivo.',
-    step2: 'Usa las miniaturas para girar páginas concretas o aplica giros rápidos a todo el documento.',
-    step3: 'Pulsa generar y descargar para crear automáticamente la copia rotada en tu navegador.',
-    privacyTitle: 'Rotar PDF sin subir archivos',
-    privacyText: 'La previsualización se genera en el navegador con pdf.js y la modificación final se hace con pdf-lib. El archivo original no se modifica ni se envía a ningún servidor.',
+    steps: [
+      { text: 'Selecciona un archivo PDF desde tu dispositivo.' },
+      { text: 'Usa las miniaturas para girar páginas concretas o aplica giros rápidos a todo el documento.' },
+      { text: 'Pulsa generar y descargar para crear automáticamente la copia rotada en tu navegador.' },
+    ],
+    infoBlocks: [
+      { title: 'Rotar PDF sin subir archivos', text: 'La previsualización se genera en el navegador con pdf.js y la modificación final se hace con pdf-lib. El archivo original no se modifica ni se envía a ningún servidor.' },
+      { title: 'Rotación visual por página', text: 'Puedes revisar miniaturas, girar páginas individuales y generar una copia nueva sin modificar el documento original.' },
+    ],
     footer: 'Tus archivos se procesan localmente en tu navegador.',
   },
   en: {
@@ -35,46 +39,34 @@ const copy = {
     badge: '100% private · No uploads · In your browser',
     h1: 'Rotate PDF online',
     lead: 'Preview thumbnails for every page, rotate individual pages or the whole document, and download a new rotated PDF copy.',
-    howTitle: 'How to rotate a PDF',
-    step1: 'Select a PDF file from your device.',
-    step2: 'Use thumbnails to rotate specific pages or apply quick rotations to the whole document.',
-    step3: 'Click generate and download to automatically create the rotated copy in your browser.',
-    privacyTitle: 'Rotate PDF without uploads',
-    privacyText: 'The preview is generated in the browser with pdf.js and the final edit is made with pdf-lib. The original file is not changed and is never sent to a server.',
+    steps: [
+      { text: 'Select a PDF file from your device.' },
+      { text: 'Use thumbnails to rotate specific pages or apply quick rotations to the whole document.' },
+      { text: 'Click generate and download to automatically create the rotated copy in your browser.' },
+    ],
+    infoBlocks: [
+      { title: 'Rotate PDF without uploads', text: 'The preview is generated in the browser with pdf.js and the final edit is made with pdf-lib. The original file is not changed and is never sent to a server.' },
+      { title: 'Visual page rotation', text: 'You can review thumbnails, rotate individual pages and generate a new copy without modifying the original document.' },
+    ],
     footer: 'Your files are processed locally in your browser.',
   },
 } as const;
 
-const pageCopy = copy[lang as Lang];
+const pageCopy = copy[currentLang];
 ---
 
-<BaseLayout
-  lang={lang}
+<ToolPageLayout
+  lang={currentLang}
   title={pageCopy.title}
   description={pageCopy.description}
   path="rotar-pdf"
+  toolId="rotate-pdf"
+  badge={pageCopy.badge}
+  h1={pageCopy.h1}
+  lead={pageCopy.lead}
+  steps={pageCopy.steps}
+  infoBlocks={pageCopy.infoBlocks}
+  footer={pageCopy.footer}
 >
-  <section class="hero">
-    <span class="badge">{pageCopy.badge}</span>
-    <h1>{pageCopy.h1}</h1>
-    <p class="lead">{pageCopy.lead}</p>
-  </section>
-
-  <RotatePdfTool client:load lang={lang} />
-
-  <section aria-labelledby="how-title">
-    <h2 id="how-title">{pageCopy.howTitle}</h2>
-    <ol>
-      <li>{pageCopy.step1}</li>
-      <li>{pageCopy.step2}</li>
-      <li>{pageCopy.step3}</li>
-    </ol>
-  </section>
-
-  <section>
-    <h2>{pageCopy.privacyTitle}</h2>
-    <p>{pageCopy.privacyText}</p>
-  </section>
-
-  <Fragment slot="footer">{pageCopy.footer}</Fragment>
-</BaseLayout>
+  <RotatePdfTool client:load lang={currentLang} />
+</ToolPageLayout>
