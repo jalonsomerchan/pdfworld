@@ -1,6 +1,6 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
 import WatermarkPdfTool from '../../components/WatermarkPdfTool.svelte';
+import ToolPageLayout from '../../layouts/ToolPageLayout.astro';
 import { getLocalizedPath, isLang, type Lang } from '../../i18n/utils';
 import { locales } from '../../i18n/ui';
 
@@ -14,6 +14,7 @@ if (!isLang(lang)) {
   return Astro.redirect(getLocalizedPath('es', 'marca-de-agua-pdf'));
 }
 
+const currentLang = lang as Lang;
 const copy = {
   es: {
     title: 'Añadir marca de agua a PDF online gratis y privado',
@@ -21,12 +22,15 @@ const copy = {
     badge: '100% privado · Sin subidas · En tu navegador',
     h1: 'Añadir marca de agua a PDF',
     lead: 'Carga un PDF, escribe el texto de la marca de agua, ajusta tamaño, opacidad, rotación, posición y páginas afectadas, y descarga una copia nueva.',
-    howTitle: 'Cómo añadir una marca de agua a un PDF',
-    step1: 'Selecciona un archivo PDF desde tu dispositivo.',
-    step2: 'Configura el texto, tamaño, opacidad, rotación, posición y rango de páginas.',
-    step3: 'Genera la vista previa y descarga el PDF con la marca de agua aplicada.',
-    privacyTitle: 'Marca de agua PDF sin subir archivos',
-    privacyText: 'La edición se realiza en el navegador con pdf-lib. El documento original no se modifica ni se envía a ningún servidor.',
+    steps: [
+      { text: 'Selecciona un archivo PDF desde tu dispositivo.' },
+      { text: 'Configura el texto, tamaño, opacidad, rotación, posición y rango de páginas.' },
+      { text: 'Genera la vista previa y descarga el PDF con la marca de agua aplicada.' },
+    ],
+    infoBlocks: [
+      { title: 'Marca de agua PDF sin subir archivos', text: 'La edición se realiza en el navegador con pdf-lib. El documento original no se modifica ni se envía a ningún servidor.' },
+      { title: 'Control visual completo', text: 'Puedes ajustar tamaño, opacidad, rotación, posición y páginas afectadas para adaptar la marca de agua al documento.' },
+    ],
     footer: 'Tus archivos se procesan localmente en tu navegador.',
   },
   en: {
@@ -35,41 +39,34 @@ const copy = {
     badge: '100% private · No uploads · In your browser',
     h1: 'Add watermark to PDF',
     lead: 'Load a PDF, type the watermark text, adjust size, opacity, rotation, position and affected pages, then download a new copy.',
-    howTitle: 'How to add a watermark to a PDF',
-    step1: 'Select a PDF file from your device.',
-    step2: 'Configure text, size, opacity, rotation, position and page range.',
-    step3: 'Generate the preview and download the PDF with the watermark applied.',
-    privacyTitle: 'Watermark PDF without uploads',
-    privacyText: 'The edit is performed in the browser with pdf-lib. The original document is not changed and is never sent to a server.',
+    steps: [
+      { text: 'Select a PDF file from your device.' },
+      { text: 'Configure text, size, opacity, rotation, position and page range.' },
+      { text: 'Generate the preview and download the PDF with the watermark applied.' },
+    ],
+    infoBlocks: [
+      { title: 'Watermark PDF without uploads', text: 'The edit is performed in the browser with pdf-lib. The original document is not changed and is never sent to a server.' },
+      { title: 'Full visual control', text: 'You can adjust size, opacity, rotation, position and affected pages to adapt the watermark to the document.' },
+    ],
     footer: 'Your files are processed locally in your browser.',
   },
 } as const;
 
-const pageCopy = copy[lang as Lang];
+const pageCopy = copy[currentLang];
 ---
 
-<BaseLayout lang={lang} title={pageCopy.title} description={pageCopy.description} path="marca-de-agua-pdf">
-  <section class="hero">
-    <span class="badge">{pageCopy.badge}</span>
-    <h1>{pageCopy.h1}</h1>
-    <p class="lead">{pageCopy.lead}</p>
-  </section>
-
-  <WatermarkPdfTool client:load lang={lang} />
-
-  <section aria-labelledby="how-title">
-    <h2 id="how-title">{pageCopy.howTitle}</h2>
-    <ol>
-      <li>{pageCopy.step1}</li>
-      <li>{pageCopy.step2}</li>
-      <li>{pageCopy.step3}</li>
-    </ol>
-  </section>
-
-  <section>
-    <h2>{pageCopy.privacyTitle}</h2>
-    <p>{pageCopy.privacyText}</p>
-  </section>
-
-  <Fragment slot="footer">{pageCopy.footer}</Fragment>
-</BaseLayout>
+<ToolPageLayout
+  lang={currentLang}
+  title={pageCopy.title}
+  description={pageCopy.description}
+  path="marca-de-agua-pdf"
+  toolId="watermark-pdf"
+  badge={pageCopy.badge}
+  h1={pageCopy.h1}
+  lead={pageCopy.lead}
+  steps={pageCopy.steps}
+  infoBlocks={pageCopy.infoBlocks}
+  footer={pageCopy.footer}
+>
+  <WatermarkPdfTool client:load lang={currentLang} />
+</ToolPageLayout>
