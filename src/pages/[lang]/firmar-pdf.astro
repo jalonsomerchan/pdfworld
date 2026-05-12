@@ -1,5 +1,5 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
+import ToolPageLayout from '../../layouts/ToolPageLayout.astro';
 import SignPdfTool from '../../components/SignPdfTool.svelte';
 import { getLocalizedPath, isLang, type Lang } from '../../i18n/utils';
 import { locales } from '../../i18n/ui';
@@ -21,14 +21,15 @@ const copy = {
     badge: 'Firma visual · Sin subidas · En tu navegador',
     h1: 'Firmar PDF con firma visual',
     lead: 'Carga un PDF, dibuja tu firma o sube una imagen, elige la página, arrastra la firma a la posición correcta, ajusta su tamaño y descarga una copia firmada.',
-    howTitle: 'Cómo firmar visualmente un PDF',
-    step1: 'Selecciona un archivo PDF desde tu dispositivo.',
-    step2: 'Dibuja la firma en el canvas o sube una imagen PNG/JPG.',
-    step3: 'Elige página, posición y tamaño, genera la vista previa y descarga el PDF firmado.',
-    privacyTitle: 'Firma PDF local y privada',
-    privacyText: 'La firma se inserta en el navegador con pdf-lib. El documento original no se modifica ni se envía a ningún servidor.',
-    legalTitle: 'Firma visual, no firma digital criptográfica',
-    legalText: 'Esta herramienta coloca una imagen de firma sobre el PDF. No añade certificado digital, sellado criptográfico ni validación legal de identidad.',
+    steps: [
+      { text: 'Selecciona un archivo PDF desde tu dispositivo.' },
+      { text: 'Dibuja la firma en el canvas o sube una imagen PNG/JPG.' },
+      { text: 'Elige página, posición y tamaño, genera la vista previa y descarga el PDF firmado.' },
+    ],
+    infoBlocks: [
+      { title: 'Firma PDF local y privada', text: 'La firma se inserta en el navegador con pdf-lib. El documento original no se modifica ni se envía a ningún servidor.' },
+      { title: 'Firma visual, no firma digital criptográfica', text: 'Esta herramienta coloca una imagen de firma sobre el PDF. No añade certificado digital, sellado criptográfico ni validación legal de identidad.' },
+    ],
     footer: 'Tus archivos se procesan localmente en tu navegador.',
   },
   en: {
@@ -37,14 +38,15 @@ const copy = {
     badge: 'Visual signature · No uploads · In your browser',
     h1: 'Sign PDF with a visual signature',
     lead: 'Load a PDF, draw your signature or upload an image, choose the page, drag the signature to the right position, adjust its size and download a signed copy.',
-    howTitle: 'How to visually sign a PDF',
-    step1: 'Select a PDF file from your device.',
-    step2: 'Draw the signature on the canvas or upload a PNG/JPG image.',
-    step3: 'Choose page, position and size, generate the preview and download the signed PDF.',
-    privacyTitle: 'Local and private PDF signing',
-    privacyText: 'The signature is inserted in the browser with pdf-lib. The original document is not changed and is never sent to a server.',
-    legalTitle: 'Visual signature, not a cryptographic digital signature',
-    legalText: 'This tool places a signature image on the PDF. It does not add a digital certificate, cryptographic sealing or legal identity validation.',
+    steps: [
+      { text: 'Select a PDF file from your device.' },
+      { text: 'Draw the signature on the canvas or upload a PNG/JPG image.' },
+      { text: 'Choose page, position and size, generate the preview and download the signed PDF.' },
+    ],
+    infoBlocks: [
+      { title: 'Local and private PDF signing', text: 'The signature is inserted in the browser with pdf-lib. The original document is not changed and is never sent to a server.' },
+      { title: 'Visual signature, not a cryptographic digital signature', text: 'This tool places a signature image on the PDF. It does not add a digital certificate, cryptographic sealing or legal identity validation.' },
+    ],
     footer: 'Your files are processed locally in your browser.',
   },
 } as const;
@@ -52,33 +54,18 @@ const copy = {
 const pageCopy = copy[lang as Lang];
 ---
 
-<BaseLayout lang={lang} title={pageCopy.title} description={pageCopy.description} path="firmar-pdf">
-  <section class="hero">
-    <span class="badge">{pageCopy.badge}</span>
-    <h1>{pageCopy.h1}</h1>
-    <p class="lead">{pageCopy.lead}</p>
-  </section>
-
+<ToolPageLayout
+  lang={lang}
+  title={pageCopy.title}
+  description={pageCopy.description}
+  path="firmar-pdf"
+  toolId="sign-pdf"
+  badge={pageCopy.badge}
+  h1={pageCopy.h1}
+  lead={pageCopy.lead}
+  steps={pageCopy.steps}
+  infoBlocks={pageCopy.infoBlocks}
+  footer={pageCopy.footer}
+>
   <SignPdfTool client:load lang={lang} />
-
-  <section aria-labelledby="how-title">
-    <h2 id="how-title">{pageCopy.howTitle}</h2>
-    <ol>
-      <li>{pageCopy.step1}</li>
-      <li>{pageCopy.step2}</li>
-      <li>{pageCopy.step3}</li>
-    </ol>
-  </section>
-
-  <section>
-    <h2>{pageCopy.privacyTitle}</h2>
-    <p>{pageCopy.privacyText}</p>
-  </section>
-
-  <section>
-    <h2>{pageCopy.legalTitle}</h2>
-    <p>{pageCopy.legalText}</p>
-  </section>
-
-  <Fragment slot="footer">{pageCopy.footer}</Fragment>
-</BaseLayout>
+</ToolPageLayout>
