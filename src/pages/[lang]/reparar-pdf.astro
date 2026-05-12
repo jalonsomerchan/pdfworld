@@ -1,5 +1,5 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
+import ToolPageLayout from '../../layouts/ToolPageLayout.astro';
 import RepairPdfTool from '../../components/RepairPdfTool.svelte';
 import { getLocalizedPath, isLang, type Lang } from '../../i18n/utils';
 import { locales } from '../../i18n/ui';
@@ -21,14 +21,15 @@ const copy = {
     badge: 'Reparar PDF · Sin subidas · En tu navegador',
     h1: 'Reparar PDF',
     lead: 'Carga un PDF que dé problemas de lectura e intenta generar una copia nueva con la estructura interna reconstruida.',
-    howTitle: 'Cómo reparar un PDF',
-    step1: 'Selecciona un archivo PDF desde tu dispositivo.',
-    step2: 'La herramienta intenta leer sus páginas y copiarlas a un documento nuevo.',
-    step3: 'Descarga la copia reconstruida y comprueba si abre correctamente.',
-    privacyTitle: 'Reparación local y privada',
-    privacyText: 'El proceso se realiza en tu navegador con pdf-lib. El PDF no se envía a ningún servidor.',
-    limitTitle: 'Límites de la reparación',
-    limitText: 'No puede recuperar PDFs gravemente corruptos, incompletos, cifrados sin contraseña o con datos esenciales perdidos. Es una reconstrucción básica para archivos parcialmente legibles.',
+    steps: [
+      { text: 'Selecciona un archivo PDF desde tu dispositivo.' },
+      { text: 'La herramienta intenta leer sus páginas y copiarlas a un documento nuevo.' },
+      { text: 'Descarga la copia reconstruida y comprueba si abre correctamente.' },
+    ],
+    infoBlocks: [
+      { title: 'Reparación local y privada', text: 'El proceso se realiza en tu navegador con pdf-lib. El PDF no se envía a ningún servidor.' },
+      { title: 'Límites de la reparación', text: 'No puede recuperar PDFs gravemente corruptos, incompletos, cifrados sin contraseña o con datos esenciales perdidos. Es una reconstrucción básica para archivos parcialmente legibles.' },
+    ],
     footer: 'Tus archivos se procesan localmente en tu navegador.',
   },
   en: {
@@ -37,14 +38,15 @@ const copy = {
     badge: 'Repair PDF · No uploads · In your browser',
     h1: 'Repair PDF',
     lead: 'Load a PDF with reading issues and try to generate a new copy with its internal structure rebuilt.',
-    howTitle: 'How to repair a PDF',
-    step1: 'Select a PDF file from your device.',
-    step2: 'The tool tries to read its pages and copy them into a new document.',
-    step3: 'Download the rebuilt copy and check whether it opens correctly.',
-    privacyTitle: 'Local and private repair',
-    privacyText: 'The process runs in your browser with pdf-lib. The PDF is not sent to any server.',
-    limitTitle: 'Repair limits',
-    limitText: 'It cannot recover severely corrupted, incomplete, encrypted-without-password PDFs or files with essential data missing. It is a basic rebuild for partially readable files.',
+    steps: [
+      { text: 'Select a PDF file from your device.' },
+      { text: 'The tool tries to read its pages and copy them into a new document.' },
+      { text: 'Download the rebuilt copy and check whether it opens correctly.' },
+    ],
+    infoBlocks: [
+      { title: 'Local and private repair', text: 'The process runs in your browser with pdf-lib. The PDF is not sent to any server.' },
+      { title: 'Repair limits', text: 'It cannot recover severely corrupted, incomplete, encrypted-without-password PDFs or files with essential data missing. It is a basic rebuild for partially readable files.' },
+    ],
     footer: 'Your files are processed locally in your browser.',
   },
 } as const;
@@ -52,33 +54,18 @@ const copy = {
 const pageCopy = copy[lang as Lang];
 ---
 
-<BaseLayout lang={lang} title={pageCopy.title} description={pageCopy.description} path="reparar-pdf">
-  <section class="hero">
-    <span class="badge">{pageCopy.badge}</span>
-    <h1>{pageCopy.h1}</h1>
-    <p class="lead">{pageCopy.lead}</p>
-  </section>
-
+<ToolPageLayout
+  lang={lang}
+  title={pageCopy.title}
+  description={pageCopy.description}
+  path="reparar-pdf"
+  toolId="repair-pdf"
+  badge={pageCopy.badge}
+  h1={pageCopy.h1}
+  lead={pageCopy.lead}
+  steps={pageCopy.steps}
+  infoBlocks={pageCopy.infoBlocks}
+  footer={pageCopy.footer}
+>
   <RepairPdfTool client:load lang={lang} />
-
-  <section aria-labelledby="how-title">
-    <h2 id="how-title">{pageCopy.howTitle}</h2>
-    <ol>
-      <li>{pageCopy.step1}</li>
-      <li>{pageCopy.step2}</li>
-      <li>{pageCopy.step3}</li>
-    </ol>
-  </section>
-
-  <section>
-    <h2>{pageCopy.privacyTitle}</h2>
-    <p>{pageCopy.privacyText}</p>
-  </section>
-
-  <section>
-    <h2>{pageCopy.limitTitle}</h2>
-    <p>{pageCopy.limitText}</p>
-  </section>
-
-  <Fragment slot="footer">{pageCopy.footer}</Fragment>
-</BaseLayout>
+</ToolPageLayout>
