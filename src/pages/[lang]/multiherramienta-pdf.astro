@@ -1,6 +1,6 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
 import MultiPdfToolImproved from '../../components/MultiPdfToolImproved.svelte';
+import ToolPageLayout from '../../layouts/ToolPageLayout.astro';
 import { getLocalizedPath, isLang, type Lang } from '../../i18n/utils';
 import { locales } from '../../i18n/ui';
 
@@ -14,6 +14,7 @@ if (!isLang(lang)) {
   return Astro.redirect(getLocalizedPath('es', 'multiherramienta-pdf'));
 }
 
+const currentLang = lang as Lang;
 const copy = {
   es: {
     title: 'Multiherramienta PDF online gratis y privada',
@@ -23,16 +24,15 @@ const copy = {
     h1: 'Multiherramienta PDF',
     lead:
       'Una sola pantalla para las operaciones más importantes: unir varios PDF, mover páginas, eliminar páginas, rotarlas, extraer una selección y añadir texto visual antes de descargar una copia nueva.',
-    howTitle: 'Qué puedes hacer con la multiherramienta',
-    step1: 'Sube uno o varios PDFs. La herramienta los carga y prepara sus páginas localmente en tu navegador.',
-    step2: 'Arrastra las miniaturas para cambiar el orden, usa los iconos para rotar o eliminar páginas, y deja seleccionadas las que quieras exportar.',
-    step3: 'Elige si descargar todo o solo la selección, añade texto si lo necesitas y genera el nuevo PDF.',
-    privacyTitle: 'Una herramienta central sin subir tus archivos',
-    privacyText:
-      'La multiherramienta trabaja con pdf-lib y pdf.js en el navegador. Los documentos no se envían a un servidor y el PDF generado se crea localmente en tu dispositivo.',
-    limitsTitle: 'Primera versión funcional y ampliable',
-    limitsText:
-      'Esta versión cubre unir, reordenar con drag and drop, rotar, eliminar, dividir por selección y añadir texto visible. Funciones más avanzadas como edición de contenido interno, firmas digitales criptográficas o protección con contraseña se añadirán como módulos específicos cuando sean fiables en frontend.',
+    steps: [
+      { text: 'Sube uno o varios PDFs. La herramienta los carga y prepara sus páginas localmente en tu navegador.' },
+      { text: 'Arrastra las miniaturas para cambiar el orden, usa los iconos para rotar o eliminar páginas, y deja seleccionadas las que quieras exportar.' },
+      { text: 'Elige si descargar todo o solo la selección, añade texto si lo necesitas y genera el nuevo PDF.' },
+    ],
+    infoBlocks: [
+      { title: 'Una herramienta central sin subir tus archivos', text: 'La multiherramienta trabaja con pdf-lib y pdf.js en el navegador. Los documentos no se envían a un servidor y el PDF generado se crea localmente en tu dispositivo.' },
+      { title: 'Primera versión funcional y ampliable', text: 'Esta versión cubre unir, reordenar con drag and drop, rotar, eliminar, dividir por selección y añadir texto visible. Funciones más avanzadas se gestionan como módulos específicos cuando son fiables en frontend.' },
+    ],
     footer: 'Tus archivos se procesan localmente en tu navegador.',
   },
   en: {
@@ -43,127 +43,106 @@ const copy = {
     h1: 'PDF multitool',
     lead:
       'One screen for the most important operations: merge PDFs, move pages, delete pages, rotate them, extract a selection and add visible text before downloading a new copy.',
-    howTitle: 'What you can do with the multitool',
-    step1: 'Upload one or more PDFs. The tool loads and prepares their pages locally in your browser.',
-    step2: 'Drag thumbnails to reorder, use icons to rotate or delete pages, and keep selected the pages you want to export.',
-    step3: 'Choose whether to download everything or only the selection, add text if needed and generate the new PDF.',
-    privacyTitle: 'A central tool without uploading your files',
-    privacyText:
-      'The multitool works with pdf-lib and pdf.js in the browser. Documents are not sent to a server and the generated PDF is created locally on your device.',
-    limitsTitle: 'Functional and extensible first version',
-    limitsText:
-      'This version covers merge, drag and drop reorder, rotate, delete, split by selection and visible text insertion. More advanced features such as internal content editing, cryptographic digital signatures or password protection will be added as specific modules when they are reliable on the frontend.',
+    steps: [
+      { text: 'Upload one or more PDFs. The tool loads and prepares their pages locally in your browser.' },
+      { text: 'Drag thumbnails to reorder, use icons to rotate or delete pages, and keep selected the pages you want to export.' },
+      { text: 'Choose whether to download everything or only the selection, add text if needed and generate the new PDF.' },
+    ],
+    infoBlocks: [
+      { title: 'A central tool without uploading your files', text: 'The multitool works with pdf-lib and pdf.js in the browser. Documents are not sent to a server and the generated PDF is created locally on your device.' },
+      { title: 'Functional and extensible first version', text: 'This version covers merge, drag and drop reorder, rotate, delete, split by selection and visible text insertion. More advanced features are handled as specific modules when reliable on the frontend.' },
+    ],
     footer: 'Your files are processed locally in your browser.',
   },
 } as const;
 
-const pageCopy = copy[lang as Lang];
+const pageCopy = copy[currentLang];
 ---
 
-<BaseLayout
-  lang={lang}
+<ToolPageLayout
+  lang={currentLang}
   title={pageCopy.title}
   description={pageCopy.description}
   path="multiherramienta-pdf"
+  toolId="pdf-multitool"
+  badge={pageCopy.badge}
+  h1={pageCopy.h1}
+  lead={pageCopy.lead}
+  steps={pageCopy.steps}
+  infoBlocks={pageCopy.infoBlocks}
+  footer={pageCopy.footer}
 >
-  <section class="hero">
-    <span class="badge">{pageCopy.badge}</span>
-    <h1>{pageCopy.h1}</h1>
-    <p class="lead">{pageCopy.lead}</p>
-  </section>
+  <MultiPdfToolImproved client:load lang={currentLang} />
+</ToolPageLayout>
 
-  <MultiPdfToolImproved client:load lang={lang} />
+<style is:global>
+  .multi-page[draggable='true']:active {
+    z-index: 20;
+    opacity: 0.92;
+    transform: rotate(1.5deg) scale(1.035) !important;
+    border-color: var(--color-primary, #2563eb) !important;
+    box-shadow:
+      0 28px 70px rgb(15 23 42 / 0.32),
+      0 0 0 6px color-mix(in srgb, var(--color-primary, #2563eb) 18%, transparent) !important;
+  }
 
-  <section aria-labelledby="how-title">
-    <h2 id="how-title">{pageCopy.howTitle}</h2>
-    <ol>
-      <li>{pageCopy.step1}</li>
-      <li>{pageCopy.step2}</li>
-      <li>{pageCopy.step3}</li>
-    </ol>
-  </section>
+  .multi-tool__pages:has(.multi-page--over) .multi-page:not(.multi-page--over) {
+    opacity: 0.48;
+    filter: saturate(0.75);
+    transform: scale(0.985);
+  }
 
-  <section>
-    <h2>{pageCopy.privacyTitle}</h2>
-    <p>{pageCopy.privacyText}</p>
-  </section>
+  .multi-tool__pages:has(.multi-page--over) .multi-page:hover:not(.multi-page--over) {
+    transform: scale(0.985);
+  }
 
-  <section>
-    <h2>{pageCopy.limitsTitle}</h2>
-    <p>{pageCopy.limitsText}</p>
-  </section>
+  .multi-page--over {
+    position: relative;
+    z-index: 15;
+    opacity: 1 !important;
+    filter: none !important;
+    transform: translateY(-8px) scale(1.045) !important;
+    border-color: var(--color-secondary, #7c3aed) !important;
+    box-shadow:
+      0 34px 90px rgb(124 58 237 / 0.34),
+      0 18px 45px rgb(15 23 42 / 0.22),
+      0 0 0 8px color-mix(in srgb, var(--color-secondary, #7c3aed) 25%, transparent) !important;
+  }
 
-  <style is:global>
-    .multi-page[draggable='true']:active {
-      z-index: 20;
-      opacity: 0.92;
-      transform: rotate(1.5deg) scale(1.035) !important;
-      border-color: var(--color-primary, #2563eb) !important;
-      box-shadow:
-        0 28px 70px rgb(15 23 42 / 0.32),
-        0 0 0 6px color-mix(in srgb, var(--color-primary, #2563eb) 18%, transparent) !important;
-    }
+  .multi-page--over::before {
+    content: '';
+    position: absolute;
+    inset: -14px;
+    z-index: -1;
+    border-radius: 32px;
+    background:
+      linear-gradient(135deg,
+        color-mix(in srgb, var(--color-secondary, #7c3aed) 20%, transparent),
+        color-mix(in srgb, var(--color-primary, #2563eb) 12%, transparent)
+      );
+    box-shadow:
+      inset 0 0 0 2px color-mix(in srgb, var(--color-secondary, #7c3aed) 42%, transparent),
+      0 0 0 999px rgb(15 23 42 / 0.02);
+  }
 
-    .multi-tool__pages:has(.multi-page--over) .multi-page:not(.multi-page--over) {
-      opacity: 0.48;
-      filter: saturate(0.75);
-      transform: scale(0.985);
-    }
+  .multi-page--over::after {
+    content: 'Soltar aquí';
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 0.55rem);
+    z-index: 5;
+    transform: translateX(-50%);
+    padding: 0.38rem 0.75rem;
+    border-radius: 999px;
+    background: var(--color-secondary, #7c3aed);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 950;
+    white-space: nowrap;
+    box-shadow: 0 14px 34px rgb(15 23 42 / 0.28);
+  }
 
-    .multi-tool__pages:has(.multi-page--over) .multi-page:hover:not(.multi-page--over) {
-      transform: scale(0.985);
-    }
-
-    .multi-page--over {
-      position: relative;
-      z-index: 15;
-      opacity: 1 !important;
-      filter: none !important;
-      transform: translateY(-8px) scale(1.045) !important;
-      border-color: var(--color-secondary, #7c3aed) !important;
-      box-shadow:
-        0 34px 90px rgb(124 58 237 / 0.34),
-        0 18px 45px rgb(15 23 42 / 0.22),
-        0 0 0 8px color-mix(in srgb, var(--color-secondary, #7c3aed) 25%, transparent) !important;
-    }
-
-    .multi-page--over::before {
-      content: '';
-      position: absolute;
-      inset: -14px;
-      z-index: -1;
-      border-radius: 32px;
-      background:
-        linear-gradient(135deg,
-          color-mix(in srgb, var(--color-secondary, #7c3aed) 20%, transparent),
-          color-mix(in srgb, var(--color-primary, #2563eb) 12%, transparent)
-        );
-      box-shadow:
-        inset 0 0 0 2px color-mix(in srgb, var(--color-secondary, #7c3aed) 42%, transparent),
-        0 0 0 999px rgb(15 23 42 / 0.02);
-    }
-
-    .multi-page--over::after {
-      content: 'Soltar aquí';
-      position: absolute;
-      left: 50%;
-      bottom: calc(100% + 0.55rem);
-      z-index: 5;
-      transform: translateX(-50%);
-      padding: 0.38rem 0.75rem;
-      border-radius: 999px;
-      background: var(--color-secondary, #7c3aed);
-      color: #fff;
-      font-size: 0.75rem;
-      font-weight: 950;
-      white-space: nowrap;
-      box-shadow: 0 14px 34px rgb(15 23 42 / 0.28);
-    }
-
-    html[lang='en'] .multi-page--over::after {
-      content: 'Drop here';
-    }
-  </style>
-
-  <Fragment slot="footer">{pageCopy.footer}</Fragment>
-</BaseLayout>
+  html[lang='en'] .multi-page--over::after {
+    content: 'Drop here';
+  }
+</style>
