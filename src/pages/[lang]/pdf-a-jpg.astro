@@ -1,5 +1,5 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
+import ToolPageLayout from '../../layouts/ToolPageLayout.astro';
 import ExtractImagesPdfTool from '../../components/ExtractImagesPdfTool.svelte';
 import { getLocalizedPath, isLang, type Lang } from '../../i18n/utils';
 import { locales } from '../../i18n/ui';
@@ -21,14 +21,15 @@ const copy = {
     badge: 'PDF a JPG · Sin subidas · En tu navegador',
     h1: 'Convertir PDF a JPG',
     lead: 'Carga un PDF, elige páginas o rangos, selecciona JPG, ajusta calidad y resolución, y descarga las páginas como imágenes o ZIP.',
-    howTitle: 'Cómo convertir PDF a JPG',
-    step1: 'Selecciona un archivo PDF desde tu dispositivo.',
-    step2: 'Elige las páginas que quieres convertir y selecciona formato JPG.',
-    step3: 'Genera las imágenes y descarga una imagen individual o un ZIP.',
-    privacyTitle: 'Conversión local y privada',
-    privacyText: 'El PDF se renderiza con pdf.js en tu navegador. No se sube a servidores y el archivo original no se modifica.',
-    noteTitle: 'Conversión por renderizado',
-    noteText: 'La herramienta exporta cada página como imagen JPG renderizada. No extrae recursos internos originales del PDF.',
+    steps: [
+      { text: 'Selecciona un archivo PDF desde tu dispositivo.' },
+      { text: 'Elige las páginas que quieres convertir y selecciona formato JPG.' },
+      { text: 'Genera las imágenes y descarga una imagen individual o un ZIP.' },
+    ],
+    infoBlocks: [
+      { title: 'Conversión local y privada', text: 'El PDF se renderiza con pdf.js en tu navegador. No se sube a servidores y el archivo original no se modifica.' },
+      { title: 'Conversión por renderizado', text: 'La herramienta exporta cada página como imagen JPG renderizada. No extrae recursos internos originales del PDF.' },
+    ],
     footer: 'Tus archivos se procesan localmente en tu navegador.',
   },
   en: {
@@ -37,14 +38,15 @@ const copy = {
     badge: 'PDF to JPG · No uploads · In your browser',
     h1: 'Convert PDF to JPG',
     lead: 'Load a PDF, choose pages or ranges, select JPG, adjust quality and resolution, then download pages as images or a ZIP.',
-    howTitle: 'How to convert PDF to JPG',
-    step1: 'Select a PDF file from your device.',
-    step2: 'Choose the pages you want to convert and select JPG format.',
-    step3: 'Generate the images and download a single image or a ZIP.',
-    privacyTitle: 'Local and private conversion',
-    privacyText: 'The PDF is rendered with pdf.js in your browser. It is not uploaded to servers and the original file is not changed.',
-    noteTitle: 'Rendered page conversion',
-    noteText: 'The tool exports each page as a rendered JPG image. It does not extract original internal PDF resources.',
+    steps: [
+      { text: 'Select a PDF file from your device.' },
+      { text: 'Choose the pages you want to convert and select JPG format.' },
+      { text: 'Generate the images and download a single image or a ZIP.' },
+    ],
+    infoBlocks: [
+      { title: 'Local and private conversion', text: 'The PDF is rendered with pdf.js in your browser. It is not uploaded to servers and the original file is not changed.' },
+      { title: 'Rendered page conversion', text: 'The tool exports each page as a rendered JPG image. It does not extract original internal PDF resources.' },
+    ],
     footer: 'Your files are processed locally in your browser.',
   },
 } as const;
@@ -52,33 +54,18 @@ const copy = {
 const pageCopy = copy[lang as Lang];
 ---
 
-<BaseLayout lang={lang} title={pageCopy.title} description={pageCopy.description} path="pdf-a-jpg">
-  <section class="hero">
-    <span class="badge">{pageCopy.badge}</span>
-    <h1>{pageCopy.h1}</h1>
-    <p class="lead">{pageCopy.lead}</p>
-  </section>
-
+<ToolPageLayout
+  lang={lang}
+  title={pageCopy.title}
+  description={pageCopy.description}
+  path="pdf-a-jpg"
+  toolId="pdf-to-jpg"
+  badge={pageCopy.badge}
+  h1={pageCopy.h1}
+  lead={pageCopy.lead}
+  steps={pageCopy.steps}
+  infoBlocks={pageCopy.infoBlocks}
+  footer={pageCopy.footer}
+>
   <ExtractImagesPdfTool client:load lang={lang} />
-
-  <section aria-labelledby="how-title">
-    <h2 id="how-title">{pageCopy.howTitle}</h2>
-    <ol>
-      <li>{pageCopy.step1}</li>
-      <li>{pageCopy.step2}</li>
-      <li>{pageCopy.step3}</li>
-    </ol>
-  </section>
-
-  <section>
-    <h2>{pageCopy.privacyTitle}</h2>
-    <p>{pageCopy.privacyText}</p>
-  </section>
-
-  <section>
-    <h2>{pageCopy.noteTitle}</h2>
-    <p>{pageCopy.noteText}</p>
-  </section>
-
-  <Fragment slot="footer">{pageCopy.footer}</Fragment>
-</BaseLayout>
+</ToolPageLayout>
