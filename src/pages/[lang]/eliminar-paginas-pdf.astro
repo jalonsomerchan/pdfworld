@@ -1,6 +1,6 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
 import DeletePagesPdfTool from '../../components/DeletePagesPdfTool.svelte';
+import ToolPageLayout from '../../layouts/ToolPageLayout.astro';
 import { getLocalizedPath, isLang, type Lang } from '../../i18n/utils';
 import { locales } from '../../i18n/ui';
 
@@ -14,6 +14,7 @@ if (!isLang(lang)) {
   return Astro.redirect(getLocalizedPath('es', 'eliminar-paginas-pdf'));
 }
 
+const currentLang = lang as Lang;
 const copy = {
   es: {
     title: 'Eliminar páginas PDF online gratis y privado',
@@ -21,12 +22,15 @@ const copy = {
     badge: '100% privado · Sin subidas · En tu navegador',
     h1: 'Eliminar páginas de un PDF',
     lead: 'Quita páginas sueltas o rangos completos de un PDF y descarga una copia limpia. El archivo original no se modifica.',
-    howTitle: 'Cómo eliminar páginas de un PDF',
-    step1: 'Selecciona un archivo PDF desde tu dispositivo.',
-    step2: 'Introduce las páginas o rangos a eliminar, por ejemplo 2,4-6.',
-    step3: 'Revisa qué páginas se conservarán y descarga una copia nueva.',
-    privacyTitle: 'Eliminar páginas sin subir archivos',
-    privacyText: 'Todo el proceso ocurre en tu navegador con pdf-lib. PDFWorld no recibe ni almacena tus documentos.',
+    steps: [
+      { text: 'Selecciona un archivo PDF desde tu dispositivo.' },
+      { text: 'Introduce las páginas o rangos a eliminar, por ejemplo 2,4-6.' },
+      { text: 'Revisa qué páginas se conservarán y descarga una copia nueva.' },
+    ],
+    infoBlocks: [
+      { title: 'Eliminar páginas sin subir archivos', text: 'Todo el proceso ocurre en tu navegador con pdf-lib. FácilPDF no recibe ni almacena tus documentos.' },
+      { title: 'Copia segura', text: 'La herramienta genera un nuevo PDF sin tocar el archivo original, para que siempre conserves tu documento de partida.' },
+    ],
     footer: 'Tus archivos se procesan localmente en tu navegador.',
   },
   en: {
@@ -35,46 +39,34 @@ const copy = {
     badge: '100% private · No uploads · In your browser',
     h1: 'Delete pages from a PDF',
     lead: 'Remove individual pages or full ranges from a PDF and download a clean copy. The original file is not modified.',
-    howTitle: 'How to delete pages from a PDF',
-    step1: 'Select a PDF file from your device.',
-    step2: 'Enter the pages or ranges to delete, for example 2,4-6.',
-    step3: 'Review which pages will be kept and download a new copy.',
-    privacyTitle: 'Delete pages without uploads',
-    privacyText: 'Everything happens in your browser with pdf-lib. PDFWorld does not receive or store your documents.',
+    steps: [
+      { text: 'Select a PDF file from your device.' },
+      { text: 'Enter the pages or ranges to delete, for example 2,4-6.' },
+      { text: 'Review which pages will be kept and download a new copy.' },
+    ],
+    infoBlocks: [
+      { title: 'Delete pages without uploads', text: 'Everything happens in your browser with pdf-lib. FácilPDF does not receive or store your documents.' },
+      { title: 'Safe copy', text: 'The tool generates a new PDF without touching the original file, so you always keep your source document.' },
+    ],
     footer: 'Your files are processed locally in your browser.',
   },
 } as const;
 
-const pageCopy = copy[lang as Lang];
+const pageCopy = copy[currentLang];
 ---
 
-<BaseLayout
-  lang={lang}
+<ToolPageLayout
+  lang={currentLang}
   title={pageCopy.title}
   description={pageCopy.description}
   path="eliminar-paginas-pdf"
+  toolId="delete-pages-pdf"
+  badge={pageCopy.badge}
+  h1={pageCopy.h1}
+  lead={pageCopy.lead}
+  steps={pageCopy.steps}
+  infoBlocks={pageCopy.infoBlocks}
+  footer={pageCopy.footer}
 >
-  <section class="hero">
-    <span class="badge">{pageCopy.badge}</span>
-    <h1>{pageCopy.h1}</h1>
-    <p class="lead">{pageCopy.lead}</p>
-  </section>
-
-  <DeletePagesPdfTool client:load lang={lang} />
-
-  <section aria-labelledby="how-title">
-    <h2 id="how-title">{pageCopy.howTitle}</h2>
-    <ol>
-      <li>{pageCopy.step1}</li>
-      <li>{pageCopy.step2}</li>
-      <li>{pageCopy.step3}</li>
-    </ol>
-  </section>
-
-  <section>
-    <h2>{pageCopy.privacyTitle}</h2>
-    <p>{pageCopy.privacyText}</p>
-  </section>
-
-  <Fragment slot="footer">{pageCopy.footer}</Fragment>
-</BaseLayout>
+  <DeletePagesPdfTool client:load lang={currentLang} />
+</ToolPageLayout>
