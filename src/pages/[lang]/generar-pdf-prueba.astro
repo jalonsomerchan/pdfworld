@@ -1,6 +1,6 @@
 ---
 import TestPdfGeneratorTool from '../../components/TestPdfGeneratorToolWithPreview.svelte';
-import BaseLayout from '../../layouts/BaseLayout.astro';
+import ToolPageLayout from '../../layouts/ToolPageLayout.astro';
 import { getLocalizedPath, isLang, useTranslations, type Lang } from '../../i18n/utils';
 import { locales } from '../../i18n/ui';
 
@@ -14,36 +14,30 @@ if (!isLang(lang)) {
   return Astro.redirect(getLocalizedPath('es', 'generar-pdf-prueba'));
 }
 
-const t = useTranslations(lang as Lang);
+const currentLang = lang as Lang;
+const t = useTranslations(currentLang);
+const steps = [
+  { text: t('tool.testPdf.step1') },
+  { text: t('tool.testPdf.step2') },
+  { text: t('tool.testPdf.step3') },
+];
+const infoBlocks = [
+  { title: t('tool.testPdf.privacyTitle'), text: t('tool.testPdf.privacyText') },
+];
 ---
 
-<BaseLayout
-  lang={lang}
+<ToolPageLayout
+  lang={currentLang}
   title={t('tool.testPdf.seo.title')}
   description={t('tool.testPdf.seo.description')}
   path="generar-pdf-prueba"
+  toolId="test-pdf-generator"
+  badge={t('home.privacyBadge')}
+  h1={t('tool.testPdf.h1')}
+  lead={t('tool.testPdf.lead')}
+  steps={steps}
+  infoBlocks={infoBlocks}
+  footer={t('footer.privacy')}
 >
-  <section class="hero">
-    <span class="badge">{t('home.privacyBadge')}</span>
-    <h1>{t('tool.testPdf.h1')}</h1>
-    <p class="lead">{t('tool.testPdf.lead')}</p>
-  </section>
-
-  <TestPdfGeneratorTool client:load lang={lang} />
-
-  <section aria-labelledby="how-title">
-    <h2 id="how-title">{t('tool.testPdf.howTitle')}</h2>
-    <ol>
-      <li>{t('tool.testPdf.step1')}</li>
-      <li>{t('tool.testPdf.step2')}</li>
-      <li>{t('tool.testPdf.step3')}</li>
-    </ol>
-  </section>
-
-  <section>
-    <h2>{t('tool.testPdf.privacyTitle')}</h2>
-    <p>{t('tool.testPdf.privacyText')}</p>
-  </section>
-
-  <Fragment slot="footer">{t('footer.privacy')}</Fragment>
-</BaseLayout>
+  <TestPdfGeneratorTool client:load lang={currentLang} />
+</ToolPageLayout>
