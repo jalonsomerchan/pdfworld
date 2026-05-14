@@ -10,6 +10,7 @@
   let observer: MutationObserver | null = null;
   let frame = 0;
   let modal: HTMLDivElement | null = null;
+  const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
 
   $: labels =
     lang === 'en'
@@ -31,7 +32,7 @@
         };
 
   function scheduleEnhance() {
-    if (frame) return;
+    if (!isBrowser || frame) return;
     frame = requestAnimationFrame(() => {
       frame = 0;
       enhanceTool();
@@ -39,7 +40,7 @@
   }
 
   function enhanceTool() {
-    if (!root) return;
+    if (!isBrowser || !root) return;
 
     root.querySelectorAll<HTMLButtonElement>('.side-actions .secondary-action').forEach((button) => {
       button.remove();
@@ -68,6 +69,8 @@
   }
 
   function openThumbnail(card: HTMLElement) {
+    if (!isBrowser) return;
+
     const image = card.querySelector<HTMLImageElement>('.multi-page__thumb img');
     const title = card.querySelector('.multi-page__meta strong')?.textContent?.trim() || labels.title;
     const fileName = card.querySelector('small')?.textContent?.trim() || '';
@@ -131,18 +134,24 @@
   }
 
   function closeThumbnail() {
+    if (!isBrowser) return;
+
     document.removeEventListener('keydown', closeOnEscape);
     modal?.remove();
     modal = null;
   }
 
   onMount(() => {
+    if (!isBrowser) return;
+
     enhanceTool();
     observer = new MutationObserver(scheduleEnhance);
     observer.observe(root, { childList: true, subtree: true });
   });
 
   onDestroy(() => {
+    if (!isBrowser) return;
+
     if (frame) cancelAnimationFrame(frame);
     observer?.disconnect();
     closeThumbnail();
