@@ -75,6 +75,116 @@ const pageCopy = copy[currentLang];
   <MultiPdfToolImproved client:load lang={currentLang} />
 </ToolPageLayout>
 
+<script is:inline>
+  (() => {
+    const labels = document.documentElement.lang === 'en'
+      ? {
+          generate: '⚡ View and download PDF',
+          enlarge: 'Enlarge thumbnail',
+          close: 'Close enlarged thumbnail',
+          title: 'Enlarged thumbnail',
+          empty: 'The thumbnail is not ready yet.',
+        }
+      : {
+          generate: '⚡ Ver y Descargar PDF',
+          enlarge: 'Ampliar miniatura',
+          close: 'Cerrar miniatura ampliada',
+          title: 'Miniatura ampliada',
+          empty: 'La miniatura aún no está lista.',
+        };
+
+    let modal = null;
+
+    function closeModal() {
+      modal?.remove();
+      modal = null;
+    }
+
+    function openThumbnail(card) {
+      const image = card.querySelector('.multi-page__thumb img');
+      const name = card.querySelector('.multi-page__meta strong')?.textContent?.trim() || labels.title;
+      const file = card.querySelector('small')?.textContent?.trim() || '';
+
+      closeModal();
+      modal = document.createElement('div');
+      modal.className = 'multi-thumb-modal';
+      modal.setAttribute('role', 'dialog');
+      modal.setAttribute('aria-modal', 'true');
+      modal.setAttribute('aria-labelledby', 'multi-thumb-modal-title');
+      modal.innerHTML = `
+        <div class="multi-thumb-modal__panel" role="document">
+          <header>
+            <div>
+              <span>${labels.title}</span>
+              <h3 id="multi-thumb-modal-title"></h3>
+              <p></p>
+            </div>
+            <button type="button" aria-label="${labels.close}">×</button>
+          </header>
+          <div class="multi-thumb-modal__body"></div>
+        </div>
+      `;
+
+      modal.querySelector('h3').textContent = name;
+      modal.querySelector('p').textContent = file;
+      const body = modal.querySelector('.multi-thumb-modal__body');
+
+      if (image?.src) {
+        const clone = document.createElement('img');
+        clone.src = image.src;
+        clone.alt = image.alt || name;
+        body.append(clone);
+      } else {
+        const message = document.createElement('p');
+        message.className = 'multi-thumb-modal__empty';
+        message.textContent = labels.empty;
+        body.append(message);
+      }
+
+      modal.addEventListener('click', (event) => {
+        if (event.target === modal) closeModal();
+      });
+      modal.querySelector('button')?.addEventListener('click', closeModal);
+      document.addEventListener('keydown', handleEscape, { once: true });
+      document.body.append(modal);
+    }
+
+    function handleEscape(event) {
+      if (event.key === 'Escape') closeModal();
+    }
+
+    function enhanceMultitool() {
+      document.querySelectorAll('.side-actions .secondary-action').forEach((button) => button.remove());
+
+      document.querySelectorAll('.side-actions .primary-action').forEach((button) => {
+        const text = button.textContent || '';
+        if (!/Generando|Generating/.test(text)) {
+          button.textContent = labels.generate;
+          button.setAttribute('aria-label', labels.generate.replace('⚡ ', ''));
+        }
+      });
+
+      document.querySelectorAll('.multi-page').forEach((card) => {
+        if (card.querySelector('.multi-page__zoom')) return;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'multi-page__zoom';
+        button.textContent = '⛶';
+        button.setAttribute('aria-label', labels.enlarge);
+        button.addEventListener('click', (event) => {
+          event.stopPropagation();
+          openThumbnail(card);
+        });
+        card.append(button);
+      });
+    }
+
+    const observer = new MutationObserver(enhanceMultitool);
+    observer.observe(document.body, { childList: true, subtree: true });
+    enhanceMultitool();
+  })();
+</script>
+
 <style is:global>
   .multi-page[draggable='true']:active {
     z-index: 20;
@@ -144,5 +254,132 @@ const pageCopy = copy[currentLang];
 
   html[lang='en'] .multi-page--over::after {
     content: 'Drop here';
+  }
+
+  .multi-page__zoom {
+    position: absolute;
+    right: 0.6rem;
+    bottom: 5.7rem;
+    z-index: 4;
+    display: grid;
+    place-items: center;
+    width: 2.1rem;
+    height: 2.1rem;
+    border: 1px solid var(--color-border, #e2e8f0);
+    border-radius: 999px;
+    background: var(--color-surface, #fff);
+    color: var(--color-text, #0f172a);
+    box-shadow: var(--shadow-sm, 0 4px 12px rgb(15 23 42 / 0.08));
+    cursor: pointer;
+    font: inherit;
+    font-weight: 950;
+  }
+
+  .multi-page__zoom:hover,
+  .multi-page__zoom:focus-visible {
+    border-color: var(--color-primary, #2563eb);
+    color: var(--color-primary, #2563eb);
+    outline: 3px solid color-mix(in srgb, var(--color-primary, #2563eb) 18%, transparent);
+    outline-offset: 2px;
+  }
+
+  .multi-thumb-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: rgb(15 23 42 / 0.72);
+    backdrop-filter: blur(10px);
+  }
+
+  .multi-thumb-modal__panel {
+    display: grid;
+    gap: 1rem;
+    width: min(100%, 52rem);
+    max-height: 92vh;
+    padding: clamp(0.9rem, 2vw, 1.25rem);
+    border: 1px solid color-mix(in srgb, var(--color-border, #e2e8f0) 55%, transparent);
+    border-radius: var(--radius-2xl, 1.5rem);
+    background: var(--color-surface, #fff);
+    box-shadow: var(--shadow-lg, 0 24px 60px rgb(15 23 42 / 0.16));
+  }
+
+  .multi-thumb-modal__panel header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .multi-thumb-modal__panel header span {
+    color: var(--color-text-muted, #475569);
+    font-size: 0.8rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .multi-thumb-modal__panel h3,
+  .multi-thumb-modal__panel p {
+    margin: 0;
+  }
+
+  .multi-thumb-modal__panel p {
+    color: var(--color-text-muted, #475569);
+    font-size: 0.9rem;
+    font-weight: 750;
+  }
+
+  .multi-thumb-modal__panel button {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--color-surface-soft, #f1f5f9);
+    color: var(--color-text, #0f172a);
+    cursor: pointer;
+    font: inherit;
+    font-size: 1.5rem;
+    font-weight: 900;
+  }
+
+  .multi-thumb-modal__body {
+    display: grid;
+    place-items: center;
+    overflow: auto;
+  }
+
+  .multi-thumb-modal__body img {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    max-height: 72vh;
+    border-radius: var(--radius-lg, 1rem);
+    background: #fff;
+    image-rendering: auto;
+    box-shadow: 0 20px 55px rgb(15 23 42 / 0.26);
+  }
+
+  .multi-thumb-modal__empty {
+    margin: 0;
+    padding: 1rem;
+    color: var(--color-text-muted, #475569);
+    font-weight: 800;
+  }
+
+  @media (max-width: 900px) {
+    .multi-page__zoom {
+      bottom: 6.1rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .multi-thumb-modal {
+      backdrop-filter: none;
+    }
   }
 </style>
