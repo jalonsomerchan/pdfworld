@@ -16,6 +16,7 @@
     id: string;
     file: File;
     pageCount: number;
+    pageLabels?: string[];
     error?: string;
   }
 
@@ -25,6 +26,7 @@
     fileName: string;
     pageIndex: number;
     pageNumber: number;
+    pageLabel: string;
     rotation: number;
     kept: boolean;
     selected: boolean;
@@ -179,6 +181,7 @@
           fileName: file.name,
           pageIndex: index,
           pageNumber: index + 1,
+          pageLabel: String(index + 1),
           rotation: 0,
           kept: true,
           selected: true,
@@ -217,6 +220,12 @@
         disableStream: true,
       }).promise;
 
+      const pageLabels = await readPageLabels(pdfDoc, sourcePages.length);
+      if (pageLabels.some((label, index) => label !== String(index + 1))) {
+        sources = sources.map((item) => (item.id === source.id ? { ...item, pageLabels } : item));
+        sourcePages.forEach((item) => updatePage(item.id, { pageLabel: pageLabels[item.pageIndex] }));
+      }
+
       for (const item of sourcePages) {
         if (token !== renderToken) return;
         await yieldToBrowser();
@@ -237,6 +246,23 @@
     } finally {
       if (token === renderToken) isRendering = false;
     }
+  }
+
+  async function readPageLabels(pdfDoc: any, pageCount: number) {
+    try {
+      const labels = typeof pdfDoc.getPageLabels === 'function' ? await pdfDoc.getPageLabels() : null;
+
+      return Array.from({ length: pageCount }, (_, index) => {
+        const label = Array.isArray(labels) ? labels[index] : '';
+        return typeof label === 'string' && label.trim() ? label.trim() : String(index + 1);
+      });
+    } catch {
+      return Array.from({ length: pageCount }, (_, index) => String(index + 1));
+    }
+  }
+
+  function pageDisplayName(page: PageItem) {
+    return page.pageLabel || String(page.pageNumber);
   }
 
   async function renderPageThumb(pdfPage: any) {
@@ -599,15 +625,15 @@
             <div class="multi-page__thumb-frame" title={t.dragPage}>
               <div class="multi-page__thumb" style={thumbStyle(item.rotation)}>
                 {#if item.thumbStatus === 'ready' && item.thumbUrl}
-                  <img src={item.thumbUrl} alt={`${t.page} ${item.pageNumber}`} loading="lazy" />
+                  <img src={item.thumbUrl} alt={`${t.page} ${pageDisplayName(item)}`} loading="lazy" />
                 {:else}
-                  <span class:multi-page__placeholder={true} class:multi-page__placeholder--loading={item.thumbStatus === 'pending'}>{item.pageNumber}</span>
+                  <span class:multi-page__placeholder={true} class:multi-page__placeholder--loading={item.thumbStatus === 'pending'}>{pageDisplayName(item)}</span>
                 {/if}
               </div>
             </div>
 
             <div class="multi-page__meta">
-              <strong>{t.page} {item.pageNumber}</strong>
+              <strong>{t.page} {pageDisplayName(item)}</strong>
               <span>{item.rotation}°</span>
             </div>
             <small>{item.fileName}</small>
