@@ -1,5 +1,5 @@
 ---
-import MultiPdfToolWithPreview from '../../components/MultiPdfToolWithPreview.svelte';
+import MultiPdfToolImproved from '../../components/MultiPdfToolImproved.svelte';
 import ToolPageLayout from '../../layouts/ToolPageLayout.astro';
 import { getLocalizedPath, isLang, type Lang } from '../../i18n/utils';
 import { locales } from '../../i18n/ui';
@@ -72,7 +72,7 @@ const pageCopy = copy[currentLang];
   infoBlocks={pageCopy.infoBlocks}
   footer={pageCopy.footer}
 >
-  <MultiPdfToolWithPreview client:load lang={currentLang} />
+  <MultiPdfToolImproved client:load lang={currentLang} />
 </ToolPageLayout>
 
 <style is:global>
